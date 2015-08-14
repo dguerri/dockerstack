@@ -106,10 +106,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             tenant-create --name "$SERVICE_TENANT_NAME"
-docker exec -i "$KEYSTONE_HOSTNAME" \
-    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
-        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
-            user-create --name admin --pass "$KEYSTONE_ADMIN_PASSWORD"
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
@@ -118,14 +115,19 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             role-create --name _member_
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name admin \
+                --pass "$KEYSTONE_ADMIN_PASSWORD" \
+                --tenant admin
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             user-role-add --tenant admin --user admin --role admin
-docker exec -i "$KEYSTONE_HOSTNAME" \
-    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
-        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
-            user-role-add --tenant admin --user admin --role _member_
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
@@ -145,16 +147,20 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             user-create --name "$GLANCE_SERVICE_USER" \
-                --pass "$GLANCE_SERVICE_PASS"
+                --pass "$GLANCE_SERVICE_PASS" \
+                --tenant "$SERVICE_TENANT_NAME"
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             user-role-add --tenant "$SERVICE_TENANT_NAME" \
                 --user "$GLANCE_SERVICE_USER" --role admin
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             service-create --name glance --type image
+
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \

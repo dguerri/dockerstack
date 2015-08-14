@@ -26,7 +26,8 @@ RUN set -x \
         glance \
         python-glanceclient \
         python-keystoneclient \
-    && apt-get -y clean
+    && apt-get -y clean \
+    && rm -f /var/lib/glance/glance.sqlite
 
 # copy config file
 COPY glance-api.conf /etc/glance/glance-api.conf
