@@ -4,7 +4,7 @@
 
  Variable | Description | Default value | Required
  --- |---| --- | ----
- `KEYSTONE_ADMIN_TOKEN` | OpenStack admin token used to bootstrap a new OpenStack instance | None | Y
+ `KEYSTONE_SERVICE_TOKEN` | OpenStack service token used to bootstrap a new OpenStack instance | None | Y
  `KEYSTONE_DB_HOST` | Mysql database hostname or ip address | `localhost` | N
  `KEYSTONE_DB_PASS` | `keystone` database password | None                             | Y
  `KEYSTONE_DB_USER` | `keystone` database user | `keystone`                       | N
@@ -15,22 +15,13 @@
 
 Using all the environment variables
 
-    docker run -d \
-      -e KEYSTONE_ADMIN_TOKEN=admintoken \
-      -e KEYSTONE_DB_HOST=keystonedbhost \
-      -e KEYSTONE_DB_PASS=keystonedbpass \
-      -e KEYSTONE_DB_USER=keystonedbuser \
-      -e MYSQL_ROOT_PASSWORD=mysqlrootpassword \
-      --name keystone \
-      -h keystone os-keystone
-
-
-In the following example `MYSQL_ROOT_PASSWORD` will be set to `$MYSQL_ENV_MYSQL_ROOT_PASSWORD`.
-Moreover we use the default value for `KEYSTONE_DB_USER` (`keystone`)
-
-    docker run -d \
-      -e KEYSTONE_ADMIN_TOKEN=admintoken \
-      -e KEYSTONE_DB_PASS=keystonedbpass \
-      --link mysql:mysql \
-      --name keystone \
-      -h keystone os-keystone
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:5000:5000/tcp \
+    --publish 0.0.0.0:35357:35357/tcp \
+    --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
+    --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
+    --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
+    --name "$KEYSTONE_HOSTNAME" \
+    --hostname "$KEYSTONE_HOSTNAME" \
+    os-keystone

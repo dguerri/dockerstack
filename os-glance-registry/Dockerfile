@@ -31,9 +31,6 @@ RUN set -x \
 # copy config file
 COPY glance-registry.conf /etc/glance/glance-registry.conf
 
-# copy sql script
-COPY glance.sql /root/glance.sql
-
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh

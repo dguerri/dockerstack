@@ -28,9 +28,6 @@ RUN set -x \
 # copy config file
 COPY xxxx.conf /etc/xxxx/xxxx.conf
 
-# copy sql script
-COPY xxxx.sql /root/xxxx.sql
-
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh

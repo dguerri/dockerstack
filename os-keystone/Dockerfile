@@ -28,11 +28,8 @@ RUN set -x \
     && apt-get -y clean \
     && rm -f /var/lib/keystone/keystone.db
 
-# copy keystone config file
+# copy service config file
 COPY keystone.conf /etc/keystone/keystone.conf
-
-# copy keystone sql script
-COPY keystone.sql /root/keystone.sql
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh

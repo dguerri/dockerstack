@@ -4,7 +4,6 @@
 
  Variable | Description | Default value | Required
  --- |---| --- | ----
- `MYSQL_ROOT_PASSWORD` |  Mysql `root` password, used to create Keystone database | `$MYSQL_ENV_MYSQL_ROOT_PASSWORD` | Y
  `GLANCE_DB_HOST` | Database server | `localhost` | N
  `GLANCE_DB_USER` | `glance` database user | `keystone` | N
  `GLANCE_DB_PASS` | `glance` database password | None | Y
@@ -34,7 +33,6 @@ Using all the environment variables
         --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
         --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
-        --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
         --name "$GLANCE_REGISTRY_HOSTNAME" \
         --hostname "$GLANCE_REGISTRY_HOSTNAME" \
         os-glance-api

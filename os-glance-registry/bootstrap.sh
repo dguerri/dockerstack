@@ -36,7 +36,6 @@ wait_host() {
 
 
 # Environment variables default values setup
-MYSQL_ROOT_PASSWORD="${MYSQL_ENV_MYSQL_ROOT_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
 GLANCE_DB_HOST="${GLANCE_DB_HOST:-localhost}"
 GLANCE_DB_USER="${GLANCE_DB_USER:-keystone}"
 #GLANCE_DB_PASS
@@ -51,7 +50,6 @@ GLANCE_SERVICE_USER=${GLANCE_SERVICE_USER:-glance}
 DATABASE_CONNECTION=\
 "mysql://${GLANCE_DB_USER}:${GLANCE_DB_PASS}@${GLANCE_DB_HOST}/glance"
 CONFIG_FILE="/etc/glance/glance-registry.conf"
-SQL_SCRIPT="/root/glance.sql"
 
 # Configure the service with environment variables defined
 sed -i "s#%GLANCE_RABBITMQ_HOST%#${GLANCE_RABBITMQ_HOST}#" "$CONFIG_FILE"
@@ -63,14 +61,6 @@ sed -i "s#%GLANCE_SERVICE_TENANT_NAME%#${GLANCE_SERVICE_TENANT_NAME}#" \
     "$CONFIG_FILE"
 sed -i "s#%GLANCE_SERVICE_USER%#${GLANCE_SERVICE_USER}#" "$CONFIG_FILE"
 sed -i "s#%GLANCE_SERVICE_PASS%#${GLANCE_SERVICE_PASS}#" "$CONFIG_FILE"
-
-# Prepare the sql script to initialize the DB (if needed)
-sed -i "s#%GLANCE_DB_USER%#${GLANCE_DB_USER}#" "$SQL_SCRIPT"
-sed -i "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" "$SQL_SCRIPT"
-
-# Wait for "$GLANCE_DB_HOST"
-wait_host "$GLANCE_DB_HOST"
-mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "$GLANCE_DB_HOST" < "$SQL_SCRIPT"
 
 # Start the service
 glance-registry

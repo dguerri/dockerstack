@@ -36,7 +36,8 @@ wait_host() {
 
 
 # Environment variables default values setup
-MYSQL_ROOT_PASSWORD="${MYSQL_ENV_MYSQL_ROOT_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
+XXXXX=""
+
 
 DATABASE_CONNECTION="<CHANGE ME>"
 CONFIG_FILE="<CHANGE ME>"
@@ -44,9 +45,6 @@ SQL_SCRIPT="<CHANGE ME>"
 
 # Configure the service with environment variables defined
 sed -i "s###" "$CONFIG_FILE"
-
-# Prepare the sql script to initialize the DB (if needed)
-sed -i "s###" "$SQL_SCRIPT"
 
 # Wait for <CHANGE ME>
 wait_host "<CHANGE ME>"

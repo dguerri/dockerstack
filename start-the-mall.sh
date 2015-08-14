@@ -5,9 +5,11 @@ set -e
 set -u
 set -o pipefail
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
-KEYSTONE_ADMIN_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
+KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
+KEYSTONE_ADMIN_PASSWORD=Ve0eequaekeiyaebohlo
 KEYSTONE_DB_PASS=uu2xoh8veaS3Ia7Cochu
 MYSQL_HOSTNAME=mysql.os-in-a-box
 KEYSTONE_HOSTNAME=keystone.os-in-a-box
@@ -16,8 +18,8 @@ RABBITMQ_HOSTNAME=rabbitmq.os-in-a-box
 RABBITMQ_ERLANG_COOKIE=xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
 GLANCE_REGISTRY_HOSTNAME=glance-registry.os-in-a-box
 GLANCE_DB_PASS=etaiPo2paefeitoowieN
-GLANCE_RABBITMQ_USER=guest
-GLANCE_RABBITMQ_PASS=guest
+GLANCE_RABBITMQ_USER=glance
+GLANCE_RABBITMQ_PASS=Shohmaiy9Wai5Vahtuid
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
 SERVICE_TENANT_NAME=service
 GLANCE_SERVICE_USER=glance
@@ -33,9 +35,9 @@ wait_host() {
     while [ "$count" -ge 0 ]; do
         set +e
         if [ -z "$port" ]; then
-            docker exec -it "$AUTODNS_HOSTNAME" ping -w1 -c2  "$hostname"
+            docker exec -i "$AUTODNS_HOSTNAME" ping -w1 -c2  "$hostname"
         else
-            docker exec -it "$AUTODNS_HOSTNAME" nc -w1 -z "$hostname" "$port"
+            docker exec -i "$AUTODNS_HOSTNAME" nc -w1 -z "$hostname" "$port"
         fi
         ret=$?
         set -e
@@ -68,18 +70,100 @@ docker run -d \
 
 wait_host "$MYSQL_HOSTNAME" 3306
 
+# Create OpenStack databases
+cat "$SCRIPT_DIR"/sql_scripts/*.sql | \
+    sed "s#%KEYSTONE_DB_USER%#${KEYSTONE_DB_USER:-keystone}#" | \
+    sed "s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#" | \
+    sed "s#%GLANCE_DB_USER%#${GLANCE_DB_USER:-glance}#" | \
+    sed "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" | \
+    docker exec -i "$MYSQL_HOSTNAME" \
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
+
 # ----[ Keystone
 docker run -d \
     --restart=on-failure:10 \
     --publish 0.0.0.0:5000:5000/tcp \
     --publish 0.0.0.0:35357:35357/tcp \
-    --env KEYSTONE_ADMIN_TOKEN="$KEYSTONE_ADMIN_TOKEN" \
+    --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
     --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
     --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
-    --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
     --name "$KEYSTONE_HOSTNAME" \
     --hostname "$KEYSTONE_HOSTNAME" \
     os-keystone
+
+
+wait_host "$KEYSTONE_HOSTNAME" 35357
+wait_host "$KEYSTONE_HOSTNAME" 5000
+
+# Create OpenStack users/tenants/roles/services/endpoints
+
+# Keystone
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            tenant-create --name admin
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            tenant-create --name "$SERVICE_TENANT_NAME"
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name admin --pass "$KEYSTONE_ADMIN_PASSWORD"
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            role-create --name admin
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            role-create --name _member_
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant admin --user admin --role admin
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant admin --user admin --role _member_
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            service-create --name keystone --type identity
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            endpoint-create \
+                --service keystone \
+                --publicurl http://${KEYSTONE_HOSTNAME}:5000/v2.0 \
+                --internalurl http://${KEYSTONE_HOSTNAME}:5000/v2.0 \
+                --adminurl http://${KEYSTONE_HOSTNAME}:35357/v2.0 \
+                --region regionOne
+
+# Glance API
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name "$GLANCE_SERVICE_USER" \
+                --pass "$GLANCE_SERVICE_PASS"
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant "$SERVICE_TENANT_NAME" \
+                --user "$GLANCE_SERVICE_USER" --role admin
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            service-create --name glance --type image
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            endpoint-create \
+            --service glance \
+            --publicurl http://${GLANCE_API_HOSTNAME}:9292/ \
+            --internalurl http://${GLANCE_API_HOSTNAME}:9292/ \
+            --adminurl http://${GLANCE_API_HOSTNAME}:9292/ \
+            --region regionOne
 
 # ----[ RabbitMQ
 docker run -d \
@@ -91,6 +175,12 @@ docker run -d \
     os-rabbitmq
 
 wait_host "$RABBITMQ_HOSTNAME" 5672
+
+# Create OpenStack RabitMQ users
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl add_user "$GLANCE_RABBITMQ_USER" "$GLANCE_RABBITMQ_PASS"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl set_permissions "$GLANCE_RABBITMQ_USER" ".*" ".*" ".*"
 
 # ----[ Glance Registry
 docker run -d \
@@ -105,7 +195,6 @@ docker run -d \
     --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
     --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
-    --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
     --name "$GLANCE_REGISTRY_HOSTNAME" \
     --hostname "$GLANCE_REGISTRY_HOSTNAME" \
     os-glance-registry
@@ -126,7 +215,6 @@ docker run -d \
     --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
     --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
-    --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
     --name "$GLANCE_API_HOSTNAME" \
     --hostname "$GLANCE_API_HOSTNAME" \
     os-glance-api

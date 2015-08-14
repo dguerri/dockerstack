@@ -38,26 +38,16 @@ wait_host() {
 # Environment variables default values setup
 KEYSTONE_DB_HOST="${KEYSTONE_DB_HOST:-localhost}"
 KEYSTONE_DB_USER="${KEYSTONE_DB_USER:-keystone}"
-# KEYSTONE_ADMIN_TOKEN
+# KEYSTONE_SERVICE_TOKEN
 # KEYSTONE_DB_PASS
-MYSQL_ROOT_PASSWORD="${MYSQL_ENV_MYSQL_ROOT_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
 
 DATABASE_CONNECTION=\
 "mysql://${KEYSTONE_DB_USER}:${KEYSTONE_DB_PASS}@${KEYSTONE_DB_HOST}/keystone"
 CONFIG_FILE="/etc/keystone/keystone.conf"
-SQL_SCRIPT="/root/keystone.sql"
 
 # Configure the service with environment variables defined
-sed -i "s#%KEYSTONE_ADMIN_TOKEN%#${KEYSTONE_ADMIN_TOKEN}#" "$CONFIG_FILE"
+sed -i "s#%KEYSTONE_SERVICE_TOKEN%#${KEYSTONE_SERVICE_TOKEN}#" "$CONFIG_FILE"
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
-
-# Prepare the sql script to initialize the DB (if needed)
-sed -i "s#%KEYSTONE_DB_USER%#${KEYSTONE_DB_USER}#" "$SQL_SCRIPT"
-sed -i "s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#" "$SQL_SCRIPT"
-
-# Wait for $KEYSTONE_DB_HOST
-wait_host "$KEYSTONE_DB_HOST"
-mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "$KEYSTONE_DB_HOST" < "$SQL_SCRIPT"
 
 # Migrate keystone database
 sudo -u keystone keystone-manage -v db_sync
