@@ -37,7 +37,7 @@ wait_host() {
 
 # Environment variables default values setup
 GLANCE_DB_HOST="${GLANCE_DB_HOST:-localhost}"
-GLANCE_DB_USER="${GLANCE_DB_USER:-keystone}"
+GLANCE_DB_USER="${GLANCE_DB_USER:-glance}"
 #GLANCE_DB_PASS
 GLANCE_REGISTRY_HOST="${GLANCE_REGISTRY_HOST:-localhost}"
 GLANCE_RABBITMQ_HOST="${GLANCE_RABBITMQ_HOST:-localhost}"
