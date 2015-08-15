@@ -19,7 +19,8 @@ CONTAINERS :=	os-mysql \
 				os-rabbitmq \
 				os-keystone \
 				os-glance-registry \
-				os-glance-api
+				os-glance-api \
+				os-neutron-server
 CLEAN_JOBS := $(addprefix clean-,${CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${CONTAINERS})

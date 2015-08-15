@@ -7,24 +7,37 @@ set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
-KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
-KEYSTONE_ADMIN_PASSWORD=Ve0eequaekeiyaebohlo
-KEYSTONE_DB_PASS=uu2xoh8veaS3Ia7Cochu
+AUTODNS_HOSTNAME=autodns.os-in-a-box
 MYSQL_HOSTNAME=mysql.os-in-a-box
 KEYSTONE_HOSTNAME=keystone.os-in-a-box
-AUTODNS_HOSTNAME=autodns.os-in-a-box
 RABBITMQ_HOSTNAME=rabbitmq.os-in-a-box
-RABBITMQ_ERLANG_COOKIE=xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
 GLANCE_REGISTRY_HOSTNAME=glance-registry.os-in-a-box
+GLANCE_API_HOSTNAME=glance-api.os-in-a-box
+NEUTRON_SERVER_HOSTNAME=neutron-server.os-in-a-box
+NOVA_API_HOSTNAME=nova.os-in-a-box
+
+MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
+KEYSTONE_DB_PASS=uu2xoh8veaS3Ia7Cochu
 GLANCE_DB_PASS=etaiPo2paefeitoowieN
+NEUTRON_DB_PASS=iejo6iec0xahshoep5Sh
+
+RABBITMQ_ERLANG_COOKIE=xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
 GLANCE_RABBITMQ_USER=glance
 GLANCE_RABBITMQ_PASS=Shohmaiy9Wai5Vahtuid
+NEUTRON_RABBITMQ_USER=neutron
+NEUTRON_RABBITMQ_PASS=oohai7geiRooChie5oQu
+
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
 SERVICE_TENANT_NAME=service
+KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
+KEYSTONE_ADMIN_PASSWORD=Ve0eequaekeiyaebohlo
 GLANCE_SERVICE_USER=glance
 GLANCE_SERVICE_PASS=Wiem3ieceigiex6voo8a
-GLANCE_API_HOSTNAME=glance-api.os-in-a-box
+NEUTRON_SERVICE_USER=neutron
+NEUTRON_SERVICE_PASS=ou0eeNgoo6Paireiphoo
+NOVA_SERVICE_USER=nova
+NOVA_SERVICE_PASS=as0aMi4thaishaegae1e
+
 
 wait_host() {
     local hostname="$1"
@@ -76,6 +89,8 @@ cat "$SCRIPT_DIR"/sql_scripts/*.sql | \
     sed "s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#" | \
     sed "s#%GLANCE_DB_USER%#${GLANCE_DB_USER:-glance}#" | \
     sed "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" | \
+    sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#" | \
+    sed "s#%NEUTRON_DB_PASS%#${NEUTRON_DB_PASS}#" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
@@ -171,6 +186,35 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
             --adminurl http://${GLANCE_API_HOSTNAME}:9292/ \
             --region regionOne
 
+# Neutron Server
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name "$NEUTRON_SERVICE_USER" \
+                --pass "$NEUTRON_SERVICE_PASS" \
+                --tenant "$SERVICE_TENANT_NAME"
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant "$SERVICE_TENANT_NAME" \
+                --user "$NEUTRON_SERVICE_USER" --role admin
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            service-create --name neutron --type network
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            endpoint-create \
+            --service neutron \
+            --publicurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
+            --internalurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
+            --adminurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
+            --region regionOne
+
 # ----[ RabbitMQ
 docker run -d \
     --restart=on-failure:10 \
@@ -186,7 +230,12 @@ wait_host "$RABBITMQ_HOSTNAME" 5672
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl add_user "$GLANCE_RABBITMQ_USER" "$GLANCE_RABBITMQ_PASS"
 docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl add_user "$NEUTRON_RABBITMQ_USER" "$NEUTRON_RABBITMQ_PASS"
+
+docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$GLANCE_RABBITMQ_USER" ".*" ".*" ".*"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl set_permissions "$NEUTRON_RABBITMQ_USER" ".*" ".*" ".*"
 
 # ----[ Glance Registry
 docker run -d \
@@ -226,3 +275,26 @@ docker run -d \
     os-glance-api
 
 wait_host "$GLANCE_API_HOSTNAME" 9292
+
+# ----[ Neutron Server
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:9696:9696/tcp \
+    --env NEUTRON_DB_HOST="$MYSQL_HOSTNAME" \
+    --env NEUTRON_DB_PASS="$NEUTRON_DB_PASS" \
+    --env NEUTRON_NOVA_URL="http://$NOVA_API_HOSTNAME:8774/v2" \
+    --env NEUTRON_IDENTITY_URI="$IDENTITY_URI" \
+    --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
+    --env NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
+    --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
+    --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+    --env NEUTRON_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env NEUTRON_RABBITMQ_USER="$NEUTRON_RABBITMQ_USER" \
+    --env NEUTRON_RABBITMQ_PASS="$NEUTRON_RABBITMQ_PASS" \
+    --name "$NEUTRON_SERVER_HOSTNAME" \
+    --hostname "$NEUTRON_SERVER_HOSTNAME" \
+    os-neutron-server
+
+wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
