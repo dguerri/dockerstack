@@ -42,7 +42,7 @@ NOVA_SERVICE_PASS=as0aMi4thaishaegae1e
 wait_host() {
     local hostname="$1"
     local port="${2:-}"
-    local count=10
+    local count=20
     local ret
 
     while [ "$count" -ge 0 ]; do
