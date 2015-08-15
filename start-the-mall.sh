@@ -91,6 +91,8 @@ cat "$SCRIPT_DIR"/sql_scripts/*.sql | \
     sed "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" | \
     sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#" | \
     sed "s#%NEUTRON_DB_PASS%#${NEUTRON_DB_PASS}#" | \
+    sed "s#%NOVA_DB_USER%#${NOVA_DB_USER:-nova}#" | \
+    sed "s#%NOVA_DB_PASS%#${NOVA_DB_PASS}#" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
@@ -231,11 +233,15 @@ docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl add_user "$GLANCE_RABBITMQ_USER" "$GLANCE_RABBITMQ_PASS"
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl add_user "$NEUTRON_RABBITMQ_USER" "$NEUTRON_RABBITMQ_PASS"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl add_user "$NOVA_RABBITMQ_USER" "$NOVA_RABBITMQ_PASS"
 
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$GLANCE_RABBITMQ_USER" ".*" ".*" ".*"
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$NEUTRON_RABBITMQ_USER" ".*" ".*" ".*"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl set_permissions "$NOVA_RABBITMQ_USER" ".*" ".*" ".*"
 
 # ----[ Glance Registry
 docker run -d \

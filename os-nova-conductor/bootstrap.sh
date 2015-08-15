@@ -23,9 +23,9 @@ set -o pipefail
 
 
 # Environment variables default values setup
-GLANCE_DB_HOST="${GLANCE_DB_HOST:-localhost}"
-GLANCE_DB_USER="${GLANCE_DB_USER:-glance}"
-#GLANCE_DB_PASS
+NOBA_DB_HOST="${NOBA_DB_HOST:-localhost}"
+NOBA_DB_USER="${NOBA_DB_USER:-glance}"
+#NOBA_DB_PASS
 GLANCE_REGISTRY_HOST="${GLANCE_REGISTRY_HOST:-localhost}"
 GLANCE_RABBITMQ_HOST="${GLANCE_RABBITMQ_HOST:-localhost}"
 GLANCE_RABBITMQ_USER="${GLANCE_RABBITMQ_USER:-guest}"
@@ -36,8 +36,8 @@ GLANCE_SERVICE_USER=${GLANCE_SERVICE_USER:-glance}
 #GLANCE_SERVICE_PASSWORD
 
 DATABASE_CONNECTION=\
-"mysql://${GLANCE_DB_USER}:${GLANCE_DB_PASS}@${GLANCE_DB_HOST}/glance"
-CONFIG_FILE="/etc/glance/glance-api.conf"
+"mysql://${NOBA_DB_USER}:${NOBA_DB_PASS}@${NOBA_DB_HOST}/nova"
+CONFIG_FILE="/etc/nova/nova.conf"
 
 # Configure the service with environment variables defined
 sed -i "s#%GLANCE_REGISTRY_HOST%#${GLANCE_REGISTRY_HOST}#" "$CONFIG_FILE"
@@ -50,6 +50,9 @@ sed -i "s#%GLANCE_SERVICE_TENANT_NAME%#${GLANCE_SERVICE_TENANT_NAME}#" \
     "$CONFIG_FILE"
 sed -i "s#%GLANCE_SERVICE_USER%#${GLANCE_SERVICE_USER}#" "$CONFIG_FILE"
 sed -i "s#%GLANCE_SERVICE_PASS%#${GLANCE_SERVICE_PASS}#" "$CONFIG_FILE"
+
+# Migrate nova database
+sudo -u nova nova-manage -v db sync
 
 # Start the service
 glance-api

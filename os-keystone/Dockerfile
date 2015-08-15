@@ -20,11 +20,7 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 # install packages
 RUN set -x \
-    && apt-get -y install \
-        mysql-client \
-        keystone \
-        python-keystoneclient \
-        python-mysqldb \
+    && apt-get -y install keystone \
     && apt-get -y clean \
     && rm -f /var/lib/keystone/keystone.db
 

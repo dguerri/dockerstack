@@ -15,17 +15,22 @@
 # limitations under the License.
 #
 
-current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
-BUILD_VERSION ?= latest
+FROM os-base-image
+MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
-all: build
+# install packages
+RUN set -x \
+    && apt-get -y install nova-conductor \
+    && apt-get -y clean \
+    && rm -f /var/lib/nova/nova.sqlite
 
-build: ; @docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+# copy config file
+COPY nova.conf /etc/nova/nova.conf
 
-clean: ; @docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+# add bootstrap script and make it executable
+COPY bootstrap.sh /etc/bootstrap.sh
+RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
-rebuild: clean build
+EXPOSE 9292
 
-test: ; @true
-
-.PHONY: all build clean test rebuild
+ENTRYPOINT ["/etc/bootstrap.sh"]

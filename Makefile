@@ -20,7 +20,8 @@ CONTAINERS :=	os-mysql \
 				os-keystone \
 				os-glance-registry \
 				os-glance-api \
-				os-neutron-server
+				os-neutron-server \
+				os-nova-conductor
 CLEAN_JOBS := $(addprefix clean-,${CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${CONTAINERS})

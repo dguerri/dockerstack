@@ -22,19 +22,6 @@ set -u
 set -o pipefail
 
 
-wait_host() {
-    local hostname="$1"
-    local count=10
-    local ret
-    while [ "$count" -ge 0 ]; do
-        set +e; ping -c2  "$hostname"; ret=$?; set -e
-        [ $ret -eq 0 ] && return 0
-        sleep 1; count="$((count-1))"
-    done
-    return 1
-}
-
-
 # Environment variables default values setup
 NEUTRON_DB_HOST="${NEUTRON_DB_HOST:-localhost}"
 NEUTRON_DB_USER="${NEUTRON_DB_USER:-neutron}"

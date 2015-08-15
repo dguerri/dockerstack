@@ -15,23 +15,18 @@
 # limitations under the License.
 #
 
-FROM os-base-image
-MAINTAINER Davide Guerri <davide.guerri@gmail.com>
+current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+BUILD_VERSION ?= latest
 
-# install packages
-RUN set -x \
-    && apt-get -y install \
-        mysql-client \
-        python-mysqldb \
-    && apt-get -y clean
+all: build
 
-# copy config file
-COPY xxxx.conf /etc/xxxx/xxxx.conf
+build: ; @docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
 
-# add bootstrap script and make it executable
-COPY bootstrap.sh /etc/bootstrap.sh
-RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
+clean: ; @docker rmi -f $(current_dir):$(BUILD_VERSION) || true
 
-EXPOSE yyyy
+rebuild: clean build
 
-ENTRYPOINT ["/etc/bootstrap.sh"]
+test:
+	@shellcheck bootstrap.sh
+
+.PHONY: all build clean test rebuild

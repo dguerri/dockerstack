@@ -20,12 +20,7 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 # install packages
 RUN set -x \
-    && apt-get -y install \
-        mysql-client \
-        python-mysqldb \
-        neutron-server \
-        python-neutronclient \
-        python-keystoneclient \
+    && apt-get -y install neutron-server \
     && apt-get -y clean \
     && rm -f /var/lib/neutron/neutron.sqlite
 
