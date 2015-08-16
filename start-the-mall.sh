@@ -14,6 +14,7 @@ RABBITMQ_HOSTNAME=rabbitmq.os-in-a-box
 GLANCE_REGISTRY_HOSTNAME=glance-registry.os-in-a-box
 GLANCE_API_HOSTNAME=glance-api.os-in-a-box
 NEUTRON_SERVER_HOSTNAME=neutron-server.os-in-a-box
+NEUTRON_DHCP_AGENT_HOSTNAME=neutron-dhcp-agent.os-in-a-box
 NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME=nova-api.os-in-a-box
 NOVA_SCHEDULER_HOSTNAME=nova-scheduler.os-in-a-box
@@ -361,6 +362,22 @@ docker run -d \
     os-neutron-server
 
 wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
+
+# ----[ Neutron DHCP agent
+docker run -d \
+    --restart=on-failure:10 \
+    --privileged=true \
+     --volume=/lib/modules:/lib/modules:ro \
+    --env NEUTRON_IDENTITY_URI="$IDENTITY_URI" \
+    --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
+    --env NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
+    --env NEUTRON_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env NEUTRON_RABBITMQ_USER="$NEUTRON_RABBITMQ_USER" \
+    --env NEUTRON_RABBITMQ_PASS="$NEUTRON_RABBITMQ_PASS" \
+    --name "$NEUTRON_DHCP_AGENT_HOSTNAME" \
+    --hostname "$NEUTRON_DHCP_AGENT_HOSTNAME" \
+    os-neutron-dhcp-agent
 
 # ----[ Nova Conductor
 docker run -d \
