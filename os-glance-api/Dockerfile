@@ -20,7 +20,9 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 # install packages
 RUN set -x \
-    && apt-get -y install glance \
+    && apt-get -y install \
+        glance \
+        python-mysqldb \
     && apt-get -y clean \
     && rm -f /var/lib/glance/glance.sqlite
 

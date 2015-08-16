@@ -14,18 +14,22 @@ RABBITMQ_HOSTNAME=rabbitmq.os-in-a-box
 GLANCE_REGISTRY_HOSTNAME=glance-registry.os-in-a-box
 GLANCE_API_HOSTNAME=glance-api.os-in-a-box
 NEUTRON_SERVER_HOSTNAME=neutron-server.os-in-a-box
-NOVA_API_HOSTNAME=nova.os-in-a-box
+NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
+NOVA_API_HOSTNAME=nova-api.os-in-a-box
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
 KEYSTONE_DB_PASS=uu2xoh8veaS3Ia7Cochu
 GLANCE_DB_PASS=etaiPo2paefeitoowieN
 NEUTRON_DB_PASS=iejo6iec0xahshoep5Sh
+NOVA_DB_PASS=shei6veelei4ofah8Aep
 
 RABBITMQ_ERLANG_COOKIE=xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
 GLANCE_RABBITMQ_USER=glance
 GLANCE_RABBITMQ_PASS=Shohmaiy9Wai5Vahtuid
 NEUTRON_RABBITMQ_USER=neutron
 NEUTRON_RABBITMQ_PASS=oohai7geiRooChie5oQu
+NOVA_RABBITMQ_USER=nova
+NOVA_RABBITMQ_PASS=gai4jaiwohShoo0quaf0
 
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
 SERVICE_TENANT_NAME=service
@@ -84,13 +88,25 @@ docker run -d \
 wait_host "$MYSQL_HOSTNAME" 3306
 
 # Create OpenStack databases
-cat "$SCRIPT_DIR"/sql_scripts/*.sql | \
+cat "$SCRIPT_DIR"/sql_scripts/keystone.sql | \
     sed "s#%KEYSTONE_DB_USER%#${KEYSTONE_DB_USER:-keystone}#" | \
     sed "s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#" | \
+    docker exec -i "$MYSQL_HOSTNAME" \
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
+
+cat "$SCRIPT_DIR"/sql_scripts/glance.sql | \
     sed "s#%GLANCE_DB_USER%#${GLANCE_DB_USER:-glance}#" | \
     sed "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" | \
+    docker exec -i "$MYSQL_HOSTNAME" \
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
+
+cat "$SCRIPT_DIR"/sql_scripts/neutron.sql | \
     sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#" | \
     sed "s#%NEUTRON_DB_PASS%#${NEUTRON_DB_PASS}#" | \
+    docker exec -i "$MYSQL_HOSTNAME" \
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
+
+cat "$SCRIPT_DIR"/sql_scripts/nova.sql | \
     sed "s#%NOVA_DB_USER%#${NOVA_DB_USER:-nova}#" | \
     sed "s#%NOVA_DB_PASS%#${NOVA_DB_PASS}#" | \
     docker exec -i "$MYSQL_HOSTNAME" \
@@ -304,3 +320,24 @@ docker run -d \
     os-neutron-server
 
 wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
+
+# ----[ Nova Conductor
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$NOVA_CONDUCTOR_HOSTNAME" \
+    --hostname "$NOVA_CONDUCTOR_HOSTNAME" \
+    --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \
+    --env NOVA_DB_PASS="$NOVA_DB_PASS" \
+    --env NOVA_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env NOVA_RABBITMQ_USER="$NOVA_RABBITMQ_USER" \
+    --env NOVA_RABBITMQ_PASS="$NOVA_RABBITMQ_PASS" \
+    --env NOVA_IDENTITY_URI="$IDENTITY_URI" \
+    --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
+    --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+    --env NOVA_GLANCE_HOST="$GLANCE_API_HOSTNAME" \
+    --env NEUTRON_AUTH_URL="$IDENTITY_URI" \
+    --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
+    --env NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
+    os-nova-conductor

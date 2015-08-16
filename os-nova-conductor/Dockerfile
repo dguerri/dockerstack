@@ -20,7 +20,9 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 # install packages
 RUN set -x \
-    && apt-get -y install nova-conductor \
+    && apt-get -y install \
+        nova-conductor \
+        python-mysqldb \
     && apt-get -y clean \
     && rm -f /var/lib/nova/nova.sqlite
 
@@ -30,7 +32,5 @@ COPY nova.conf /etc/nova/nova.conf
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
-
-EXPOSE 9292
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
