@@ -22,7 +22,8 @@ CONTAINERS :=	os-mysql \
 				os-glance-api \
 				os-neutron-server \
 				os-nova-conductor \
-				os-nova-api
+				os-nova-api \
+				os-nova-scheduler
 CLEAN_JOBS := $(addprefix clean-,${CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${CONTAINERS})

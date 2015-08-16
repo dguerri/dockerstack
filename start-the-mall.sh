@@ -16,6 +16,7 @@ GLANCE_API_HOSTNAME=glance-api.os-in-a-box
 NEUTRON_SERVER_HOSTNAME=neutron-server.os-in-a-box
 NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME=nova-api.os-in-a-box
+NOVA_SCHEDULER_HOSTNAME=nova-scheduler.os-in-a-box
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
 KEYSTONE_DB_USER=keystone
@@ -402,3 +403,20 @@ docker run -d \
     os-nova-api
 
 wait_host "$NOVA_API_HOSTNAME" 8774
+
+# ----[ Nova Scheduler
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$NOVA_SCHEDULER_HOSTNAME" \
+    --hostname "$NOVA_SCHEDULER_HOSTNAME" \
+    --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \
+    --env NOVA_DB_USER="$NOVA_DB_USER" \
+    --env NOVA_DB_PASS="$NOVA_DB_PASS" \
+    --env NOVA_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env NOVA_RABBITMQ_USER="$NOVA_RABBITMQ_USER" \
+    --env NOVA_RABBITMQ_PASS="$NOVA_RABBITMQ_PASS" \
+    --env NOVA_IDENTITY_URI="$IDENTITY_URI" \
+    --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
+    --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+    os-nova-scheduler
