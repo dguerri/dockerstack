@@ -20,12 +20,16 @@ BUILD_VERSION ?= latest
 
 all: build
 
-build: ; @docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+build:
+	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
 
-clean: ; @docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+clean:
+	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
 
 rebuild: clean build
 
-test: ; @true
+test: ; @true ; echo "❎  $(current_dir):$(BUILD_VERSION) - Not implemented"
 
 .PHONY: all build clean test rebuild

@@ -24,8 +24,10 @@
 
     docker run -d \
         --restart=on-failure:10 \
-        --name "$NOVA_CONDUCTOR_HOSTNAME" \
-        --hostname "$NOVA_CONDUCTOR_HOSTNAME" \
+        --privileged=true \
+         --volume=/lib/modules:/lib/modules:ro \
+        --name "$NOVA_API_HOSTNAME" \
+        --hostname "$NOVA_API_HOSTNAME" \
         --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \
         --env NOVA_DB_USER="$NOVA_DB_USER" \
         --env NOVA_DB_PASS="$NOVA_DB_PASS" \
@@ -41,4 +43,4 @@
         --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
         --env NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
-        os-nova-conductor
+        os-nova-api

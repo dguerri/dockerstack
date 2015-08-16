@@ -15,24 +15,24 @@
 # limitations under the License.
 #
 
-current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
-BUILD_VERSION ?= latest
+FROM os-base-image
+MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
-all: build
+# install packages
+RUN set -x \
+    && apt-get -y install \
+        nova-api \
+        python-mysqldb \
+    && apt-get -y clean \
+    && rm -f /var/lib/nova/nova.sqlite
 
-build:
-	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
-	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
+# copy config file
+COPY nova.conf /etc/nova/nova.conf
 
-clean:
-	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
-	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
+# add bootstrap script and make it executable
+COPY bootstrap.sh /etc/bootstrap.sh
+RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
+EXPOSE 8774
 
-rebuild: clean build
-
-test:
-	@shellcheck bootstrap.sh
-	@echo "😏  $(current_dir):$(BUILD_VERSION) - Passed"
-
-.PHONY: all build clean test rebuild
+ENTRYPOINT ["/etc/bootstrap.sh"]

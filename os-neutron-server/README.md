@@ -22,8 +22,6 @@
 
 ## Examples
 
-Using all the environment variables
-
     docker run -d \
         --restart=on-failure:10 \
         --publish 0.0.0.0:9696:9696/tcp \

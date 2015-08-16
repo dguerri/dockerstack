@@ -21,7 +21,8 @@ CONTAINERS :=	os-mysql \
 				os-glance-registry \
 				os-glance-api \
 				os-neutron-server \
-				os-nova-conductor
+				os-nova-conductor \
+				os-nova-api
 CLEAN_JOBS := $(addprefix clean-,${CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${CONTAINERS})
@@ -29,23 +30,23 @@ BUILD_VERSION ?= latest
 
 # build-os-base-image must be done before anything else
 all:
-	$(MAKE) build-os-base-image
-	$(MAKE) ${BUILD_JOBS}
+	@$(MAKE) build-os-base-image
+	@$(MAKE) ${BUILD_JOBS}
 
 clean: ${CLEAN_JOBS} clean-os-base-image
 
-test: ${TEST_JOBS} build-os-base-image
+test: ${TEST_JOBS} test-os-base-image
 
-build-os-base-image: ; $(MAKE) -C os-base-image build
+build-os-base-image: ; @$(MAKE) -s -C os-base-image build
 
-clean-os-base-image: ; $(MAKE) -C os-base-image clean
+clean-os-base-image: ; @$(MAKE) -s -C os-base-image clean
 
-test-os-base-image: ; $(MAKE) -C os-base-image test
+test-os-base-image: ; @$(MAKE) -s -C os-base-image test
 
-${CLEAN_JOBS}: clean-%: ; $(MAKE) -C $* clean
+${CLEAN_JOBS}: clean-%: ; @$(MAKE) -s -C $* clean
 
-${BUILD_JOBS}: build-%: ; $(MAKE) -C $* build
+${BUILD_JOBS}: build-%: ; @$(MAKE) -s -C $* build
 
-${TEST_JOBS}: test-%: ; $(MAKE) -C $* test
+${TEST_JOBS}: test-%: ; @$(MAKE) -s -C $* test
 
 .PHONY: all ${CLEAN_JOBS} ${BUILD_JOBS} ${TEST_JOBS}

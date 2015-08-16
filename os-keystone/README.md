@@ -13,15 +13,13 @@
 
 ## Examples
 
-Using all the environment variables
-
-docker run -d \
-    --restart=on-failure:10 \
-    --publish 0.0.0.0:5000:5000/tcp \
-    --publish 0.0.0.0:35357:35357/tcp \
-    --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
-    --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
-    --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
-    --name "$KEYSTONE_HOSTNAME" \
-    --hostname "$KEYSTONE_HOSTNAME" \
-    os-keystone
+    docker run -d \
+        --restart=on-failure:10 \
+        --publish 0.0.0.0:5000:5000/tcp \
+        --publish 0.0.0.0:35357:35357/tcp \
+        --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
+        --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
+        --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
+        --name "$KEYSTONE_HOSTNAME" \
+        --hostname "$KEYSTONE_HOSTNAME" \
+        os-keystone
