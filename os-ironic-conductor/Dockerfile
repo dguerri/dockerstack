@@ -15,13 +15,31 @@
 # limitations under the License.
 #
 
-FROM ubuntu:14.04
+FROM os-base-image
 MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
-# Install packages
+# install packages
 RUN set -x \
-    && echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/kilo main" > /etc/apt/sources.list.d/kilo.list \
-    && apt-get -y update \
-    && apt-get -y install ubuntu-cloud-keyring \
-    && apt-get -y update \
-    && apt-get -y clean
+    && apt-get -y install \
+        ironic-conductor \
+        python-mysqldb \
+    && apt-get -y clean \
+    && rm -f /var/lib/ironic/ironic.db
+
+# set up PXE and iPXE
+RUN mkdir -p /tftpboot && \
+    chown -R ironic /tftpboot
+
+RUN mkdir -p /httpboot && \
+    chown -R ironic /httpboot
+
+VOLUME ["/tftpboot", "/httpboot"]
+
+# copy config file
+COPY ironic.conf /etc/ironic/ironic.conf
+
+# add bootstrap script and make it executable
+COPY bootstrap.sh /etc/bootstrap.sh
+RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
+
+ENTRYPOINT ["/etc/bootstrap.sh"]

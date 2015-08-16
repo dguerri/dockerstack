@@ -15,19 +15,20 @@
 # limitations under the License.
 #
 
-CONTAINERS :=	os-mysql \
-				os-rabbitmq \
-				os-keystone \
-				os-glance-registry \
-				os-glance-api \
-				os-neutron-server \
-				os-nova-conductor \
-				os-nova-api \
-				os-nova-scheduler \
-				os-neutron-dhcp-agent
-CLEAN_JOBS := $(addprefix clean-,${CONTAINERS})
-BUILD_JOBS := $(addprefix build-,${CONTAINERS})
-TEST_JOBS  := $(addprefix test-,${CONTAINERS})
+BASE_CONTAINERS :=	os-mysql \
+					os-rabbitmq \
+					os-keystone \
+					os-glance-registry \
+					os-glance-api \
+					os-neutron-server \
+					os-nova-conductor \
+					os-nova-api \
+					os-nova-scheduler \
+					os-neutron-dhcp-agent \
+					os-ironic-conductor
+CLEAN_JOBS := $(addprefix clean-,${BASE_CONTAINERS})
+BUILD_JOBS := $(addprefix build-,${BASE_CONTAINERS})
+TEST_JOBS  := $(addprefix test-,${BASE_CONTAINERS})
 BUILD_VERSION ?= latest
 
 # build-os-base-image must be done before anything else

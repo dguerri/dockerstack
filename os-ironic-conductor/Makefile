@@ -15,13 +15,23 @@
 # limitations under the License.
 #
 
-FROM ubuntu:14.04
-MAINTAINER Davide Guerri <davide.guerri@gmail.com>
+current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+BUILD_VERSION ?= latest
 
-# Install packages
-RUN set -x \
-    && echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/kilo main" > /etc/apt/sources.list.d/kilo.list \
-    && apt-get -y update \
-    && apt-get -y install ubuntu-cloud-keyring \
-    && apt-get -y update \
-    && apt-get -y clean
+all: build
+
+build:
+	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
+
+clean:
+	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
+
+rebuild: clean build
+
+test:
+	@shellcheck bootstrap.sh
+	@echo "😏  $(current_dir):$(BUILD_VERSION) - Passed"
+
+.PHONY: all build clean test rebuild
