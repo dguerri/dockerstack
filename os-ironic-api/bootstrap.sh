@@ -74,4 +74,4 @@ sed -i "s#%IRONIC_MEMCACHED_SERVERS%#${IRONIC_MEMCACHED_SERVERS}#" \
 sudo -u ironic ironic-dbsync -v upgrade
 
 # Start the service
-ironic-conductor
+ironic-api

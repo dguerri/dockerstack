@@ -16,6 +16,7 @@
  `NOVA_SERVICE_PASS` | | | Y
  `NOVA_GLANCE_HOST` | | | N
  `NOVA_NEUTRON_HOST` | | | N
+ `NOVA_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
 
 ## Examples
 
@@ -37,4 +38,5 @@
         --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
         --env NOVA_GLANCE_API_HOST="$GLANCE_API_HOSTNAME" \
         --env NOVA_NEUTRON_SERVER_HOST="$NEUTRON_SERVER_HOSTNAME" \
+        --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
         os-nova-api

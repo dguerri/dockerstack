@@ -8,8 +8,7 @@
  `KEYSTONE_DB_HOST` | Mysql database hostname or ip address | `localhost` | N
  `KEYSTONE_DB_PASS` | `keystone` database password | None                             | Y
  `KEYSTONE_DB_USER` | `keystone` database user | `keystone`                       | N
- `MYSQL_ROOT_PASSWORD` | Mysql `root` password, used to create Keystone database | `$MYSQL_ENV_MYSQL_ROOT_PASSWORD` | Y
-
+ `KEYSTONE_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
 
 ## Examples
 
@@ -20,6 +19,7 @@
         --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
         --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
         --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
+        --env KEYSTONE_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
         --name "$KEYSTONE_HOSTNAME" \
         --hostname "$KEYSTONE_HOSTNAME" \
         os-keystone

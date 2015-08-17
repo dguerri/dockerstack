@@ -15,21 +15,5 @@
 # limitations under the License.
 #
 
-current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
-BUILD_VERSION ?= latest
-
-all: build
-
-build:
-	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
-	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
-
-clean:
-	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
-	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
-
-rebuild: clean build
-
-test: ; @true ; echo "☝️  $(current_dir):$(BUILD_VERSION) - Not implemented"
-
-.PHONY: all build clean test rebuild
+FROM memcached:latest
+MAINTAINER Davide Guerri <davide.guerri@gmail.com>

@@ -33,6 +33,6 @@ rebuild: clean build
 
 test:
 	@shellcheck bootstrap.sh
-	@echo "😏  $(current_dir):$(BUILD_VERSION) - Passed"
+	@echo "✅  $(current_dir):$(BUILD_VERSION) - Passed"
 
 .PHONY: all build clean test rebuild

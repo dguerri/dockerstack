@@ -17,6 +17,7 @@
 
 BASE_CONTAINERS :=	os-mysql \
 					os-rabbitmq \
+					os-memcached \
 					os-keystone \
 					os-glance-registry \
 					os-glance-api \
@@ -25,7 +26,9 @@ BASE_CONTAINERS :=	os-mysql \
 					os-nova-api \
 					os-nova-scheduler \
 					os-neutron-dhcp-agent \
-					os-ironic-conductor
+					os-ironic-conductor \
+					os-ironic-api \
+					os-swift-proxy
 CLEAN_JOBS := $(addprefix clean-,${BASE_CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${BASE_CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${BASE_CONTAINERS})

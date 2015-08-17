@@ -25,8 +25,18 @@ set -o pipefail
 # Environment variables default values setup
 KEYSTONE_DB_HOST="${KEYSTONE_DB_HOST:-localhost}"
 KEYSTONE_DB_USER="${KEYSTONE_DB_USER:-keystone}"
-# KEYSTONE_SERVICE_TOKEN
 # KEYSTONE_DB_PASS
+# KEYSTONE_SERVICE_TOKEN
+KEYSTONE_MEMCACHED_SERVERS="${KEYSTONE_MEMCACHED_SERVERS:-}"
+
+# Enable memcached if needed
+if [ -z "$KEYSTONE_MEMCACHED_SERVERS" ]; then
+    MEMCACHE_ENABLED=false
+    CACHE_BACKEND=keystone.common.cache.noop
+else
+    MEMCACHE_ENABLED=true
+    CACHE_BACKEND=keystone.cache.memcache_pool
+fi
 
 DATABASE_CONNECTION=\
 "mysql://${KEYSTONE_DB_USER}:${KEYSTONE_DB_PASS}@${KEYSTONE_DB_HOST}/keystone"
@@ -35,6 +45,10 @@ CONFIG_FILE="/etc/keystone/keystone.conf"
 # Configure the service with environment variables defined
 sed -i "s#%KEYSTONE_SERVICE_TOKEN%#${KEYSTONE_SERVICE_TOKEN}#" "$CONFIG_FILE"
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
+sed -i "s#%KEYSTONE_MEMCACHED_SERVERS%#${KEYSTONE_MEMCACHED_SERVERS}#" \
+    "$CONFIG_FILE"
+sed -i "s#%MEMCACHE_ENABLED%#${MEMCACHE_ENABLED}#" "$CONFIG_FILE"
+sed -i "s#%CACHE_BACKEND%#${CACHE_BACKEND}#" "$CONFIG_FILE"
 
 # Migrate keystone database
 sudo -u keystone keystone-manage -v db_sync

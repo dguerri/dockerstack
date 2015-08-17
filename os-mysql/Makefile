@@ -30,6 +30,6 @@ clean:
 
 rebuild: clean build
 
-test: ; @true ; echo "❎  $(current_dir):$(BUILD_VERSION) - Not implemented"
+test: ; @true ; echo "☝️  $(current_dir):$(BUILD_VERSION) - Not implemented"
 
 .PHONY: all build clean test rebuild

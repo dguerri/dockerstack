@@ -11,6 +11,7 @@ AUTODNS_HOSTNAME=autodns.os-in-a-box
 MYSQL_HOSTNAME=mysql.os-in-a-box
 KEYSTONE_HOSTNAME=keystone.os-in-a-box
 RABBITMQ_HOSTNAME=rabbitmq.os-in-a-box
+MEMCACHED_HOSTNAME=memcached.os-in-a-box
 GLANCE_REGISTRY_HOSTNAME=glance-registry.os-in-a-box
 GLANCE_API_HOSTNAME=glance-api.os-in-a-box
 NEUTRON_SERVER_HOSTNAME=neutron-server.os-in-a-box
@@ -18,6 +19,8 @@ NEUTRON_DHCP_AGENT_HOSTNAME=neutron-dhcp-agent.os-in-a-box
 NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME=nova-api.os-in-a-box
 NOVA_SCHEDULER_HOSTNAME=nova-scheduler.os-in-a-box
+SWIFT_PROXY_HOSTNAME=swift-proxy.os-in-a-box
+SWIFT_STORAGE1_HOSTNAME=swift-storage1.os-in-a-box
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
 KEYSTONE_DB_USER=keystone
@@ -38,6 +41,8 @@ NOVA_RABBITMQ_USER=nova
 NOVA_RABBITMQ_PASS=gai4jaiwohShoo0quaf0
 
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
+MEMCACHED_SERVERS="$MEMCACHED_HOSTNAME:11211"
+
 SERVICE_TENANT_NAME=service
 KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
 KEYSTONE_ADMIN_PASSWORD=Ve0eequaekeiyaebohlo
@@ -47,7 +52,8 @@ NEUTRON_SERVICE_USER=neutron
 NEUTRON_SERVICE_PASS=ou0eeNgoo6Paireiphoo
 NOVA_SERVICE_USER=nova
 NOVA_SERVICE_PASS=as0aMi4thaishaegae1e
-
+SWIFT_SERVICE_USER=swift
+SWIFT_SERVICE_PASS=aeya8la0eey5peih1Sa9
 
 wait_host() {
     local hostname="$1"
@@ -93,28 +99,38 @@ docker run -d \
 
 wait_host "$MYSQL_HOSTNAME" 3306
 
+# ----[ Memcached
+docker run -d \
+    --restart=on-failure:10 \
+    --expose 11211 \
+    --name "$MEMCACHED_HOSTNAME" \
+    --hostname "$MEMCACHED_HOSTNAME" \
+    os-memcached
+
+wait_host "$MEMCACHED_HOSTNAME" 11211
+
 # Create OpenStack databases
-cat "$SCRIPT_DIR"/sql_scripts/keystone.sql | \
-    sed "s#%KEYSTONE_DB_USER%#${KEYSTONE_DB_USER:-keystone}#" | \
-    sed "s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#" | \
+sed "s#%KEYSTONE_DB_USER%#${KEYSTONE_DB_USER:-keystone}#g;\
+     s#%KEYSTONE_DB_PASS%#${KEYSTONE_DB_PASS}#g" \
+        "$SCRIPT_DIR/sql_scripts/keystone.sql" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
-cat "$SCRIPT_DIR"/sql_scripts/glance.sql | \
-    sed "s#%GLANCE_DB_USER%#${GLANCE_DB_USER:-glance}#" | \
-    sed "s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#" | \
+sed "s#%GLANCE_DB_USER%#${GLANCE_DB_USER:-glance}#g;
+     s#%GLANCE_DB_PASS%#${GLANCE_DB_PASS}#g" \
+        "$SCRIPT_DIR/sql_scripts/glance.sql" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
-cat "$SCRIPT_DIR"/sql_scripts/neutron.sql | \
-    sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#" | \
-    sed "s#%NEUTRON_DB_PASS%#${NEUTRON_DB_PASS}#" | \
+sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#g;\
+     s#%NEUTRON_DB_PASS%#${NEUTRON_DB_PASS}#g" \
+        "$SCRIPT_DIR/sql_scripts/neutron.sql" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
-cat "$SCRIPT_DIR"/sql_scripts/nova.sql | \
-    sed "s#%NOVA_DB_USER%#${NOVA_DB_USER:-nova}#" | \
-    sed "s#%NOVA_DB_PASS%#${NOVA_DB_PASS}#" | \
+sed "s#%NOVA_DB_USER%#${NOVA_DB_USER:-nova}#g;\
+     s#%NOVA_DB_PASS%#${NOVA_DB_PASS}#g" \
+        "$SCRIPT_DIR/sql_scripts/nova.sql" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
@@ -127,10 +143,10 @@ docker run -d \
     --env KEYSTONE_DB_HOST="$MYSQL_HOSTNAME" \
     --env KEYSTONE_DB_USER="$KEYSTONE_DB_USER" \
     --env KEYSTONE_DB_PASS="$KEYSTONE_DB_PASS" \
+    --env KEYSTONE_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     --name "$KEYSTONE_HOSTNAME" \
     --hostname "$KEYSTONE_HOSTNAME" \
     os-keystone
-
 
 wait_host "$KEYSTONE_HOSTNAME" 35357
 wait_host "$KEYSTONE_HOSTNAME" 5000
@@ -177,9 +193,9 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             endpoint-create \
                 --service keystone \
-                --publicurl http://${KEYSTONE_HOSTNAME}:5000/v2.0 \
-                --internalurl http://${KEYSTONE_HOSTNAME}:5000/v2.0 \
-                --adminurl http://${KEYSTONE_HOSTNAME}:35357/v2.0 \
+                --publicurl "http://${KEYSTONE_HOSTNAME}:5000/v2.0" \
+                --internalurl "http://${KEYSTONE_HOSTNAME}:5000/v2.0" \
+                --adminurl "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
                 --region regionOne
 
 # Glance API
@@ -206,9 +222,40 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             endpoint-create \
             --service glance \
-            --publicurl http://${GLANCE_API_HOSTNAME}:9292/ \
-            --internalurl http://${GLANCE_API_HOSTNAME}:9292/ \
-            --adminurl http://${GLANCE_API_HOSTNAME}:9292/ \
+            --publicurl "http://${GLANCE_API_HOSTNAME}:9292/" \
+            --internalurl "http://${GLANCE_API_HOSTNAME}:9292/" \
+            --adminurl "http://${GLANCE_API_HOSTNAME}:9292/" \
+            --region regionOne
+
+# Swift
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name "$SWIFT_SERVICE_USER" \
+                --pass "$SWIFT_SERVICE_PASS" \
+                --tenant "$SERVICE_TENANT_NAME"
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant "$SERVICE_TENANT_NAME" \
+                --user "$SWIFT_SERVICE_USER" --role admin
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            service-create --name swift --type object
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            endpoint-create \
+            --service swift \
+            --publicurl \
+                "http://${SWIFT_PROXY_HOSTNAME}:8080/v1/AUTH_%(tenant_id)s" \
+            --internalurl \
+                "http://${SWIFT_PROXY_HOSTNAME}:8080/v1/AUTH_%(tenant_id)s" \
+            --adminurl "http://${SWIFT_PROXY_HOSTNAME}:8080/" \
             --region regionOne
 
 # Neutron Server
@@ -396,6 +443,7 @@ docker run -d \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
     --env NOVA_GLANCE_API_HOST="$GLANCE_API_HOSTNAME" \
     --env NOVA_NEUTRON_SERVER_HOST="$NEUTRON_SERVER_HOSTNAME" \
+    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-nova-conductor
 
 # ----[ Nova API
@@ -417,6 +465,7 @@ docker run -d \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
     --env NOVA_GLANCE_API_HOST="$GLANCE_API_HOSTNAME" \
     --env NOVA_NEUTRON_SERVER_HOST="$NEUTRON_SERVER_HOSTNAME" \
+    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-nova-api
 
 wait_host "$NOVA_API_HOSTNAME" 8774
@@ -436,4 +485,25 @@ docker run -d \
     --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-nova-scheduler
+
+# ----[ Swift Proxy
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$SWIFT_PROXY_HOSTNAME" \
+    --hostname "$SWIFT_PROXY_HOSTNAME" \
+    --volume /etc/swift/rings:/etc/swift/rings \
+    --env SWIFT_IDENTITY_URI="$IDENTITY_URI" \
+    --env SWIFT_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env SWIFT_SERVICE_USER="$SWIFT_SERVICE_USER" \
+    --env SWIFT_SERVICE_PASS="$SWIFT_SERVICE_PASS" \
+    --env SWIFT_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
+    --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
+    --env SWIFT_REPLICA="3" \
+    --env SWIFT_MIN_PART_HOURS="1" \
+    --env SWIFT_ACCOUNT_BLOCK_DEVICES="r1z1-10.0.0.1:6000/sdb1,r1z1-10.0.0.2:6000/sdb1,r1z1-10.0.0.3:6000/sdb1" \
+    --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-10.0.0.1:6001/sdb1,r1z1-10.0.0.2:6001/sdb1,r1z1-10.0.0.3:6001/sdb1" \
+    --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-10.0.0.1:6002/sdb1,r1z1-10.0.0.2:6002/sdb1,r1z1-10.0.0.3:6002/sdb1" \
+    os-swift-proxy
