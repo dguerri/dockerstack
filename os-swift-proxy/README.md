@@ -34,7 +34,7 @@
         --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
         --env SWIFT_REPLICA="2" \
         --env SWIFT_MIN_PART_HOURS="1" \
-        --env SWIFT_ACCOUNT_BLOCK_DEVICES="r1z1-$IP_NODE1:6000/sdb1" \
+        --env SWIFT_ACCOUNT_BLOCK_DEVICES="r1z1-$IP_NODE1:6002/sdb1" \
         --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-$IP_NODE1:6001/sdb1" \
-        --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$IP_NODE1:6002/sdb1" \
+        --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$IP_NODE1:6000/sdb1" \
         os-swift-proxy

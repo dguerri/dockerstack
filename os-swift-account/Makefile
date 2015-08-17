@@ -15,28 +15,23 @@
 # limitations under the License.
 #
 
-FROM os-base-image
-MAINTAINER Davide Guerri <davide.guerri@gmail.com>
+current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+BUILD_VERSION ?= latest
 
-# install packages
-RUN set -x \
-    && apt-get -y install \
-        swift \
-        swift-proxy \
-        python-keystoneclient \
-        python-keystonemiddleware \
-    && apt-get -y clean
+all: build
 
-# copy config files
-COPY proxy-server.conf /etc/swift/proxy-server.conf
-COPY swift.conf /etc/swift/swift.conf
+build:
+	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
 
-# add bootstrap script and make it executable
-COPY bootstrap.sh /etc/bootstrap.sh
-RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
+clean:
+	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
 
-VOLUME /etc/swift/rings:/etc/swift/rings
+rebuild: clean build
 
-EXPOSE 8080
+test:
+	@shellcheck bootstrap.sh
+	@echo "✅  $(current_dir):$(BUILD_VERSION) - Passed"
 
-ENTRYPOINT ["/etc/bootstrap.sh"]
+.PHONY: all build clean test rebuild

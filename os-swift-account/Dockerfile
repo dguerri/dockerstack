@@ -22,13 +22,11 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 RUN set -x \
     && apt-get -y install \
         swift \
-        swift-proxy \
-        python-keystoneclient \
-        python-keystonemiddleware \
+        swift-account \
     && apt-get -y clean
 
-# copy config files
-COPY proxy-server.conf /etc/swift/proxy-server.conf
+# copy config file
+COPY account-server.conf /etc/swift/account-server.conf
 COPY swift.conf /etc/swift/swift.conf
 
 # add bootstrap script and make it executable
@@ -37,6 +35,6 @@ RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
 VOLUME /etc/swift/rings:/etc/swift/rings
 
-EXPOSE 8080
+EXPOSE 6002
 
 ENTRYPOINT ["/etc/bootstrap.sh"]

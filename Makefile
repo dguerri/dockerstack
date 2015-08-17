@@ -28,7 +28,8 @@ BASE_CONTAINERS :=	os-mysql \
 					os-neutron-dhcp-agent \
 					os-ironic-conductor \
 					os-ironic-api \
-					os-swift-proxy
+					os-swift-proxy \
+					os-swift-account
 CLEAN_JOBS := $(addprefix clean-,${BASE_CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${BASE_CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${BASE_CONTAINERS})
