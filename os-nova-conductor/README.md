@@ -14,8 +14,9 @@
  `NOVA_SERVICE_TENANT_NAME` | | | N
  `NOVA_SERVICE_USER` | | | N
  `NOVA_SERVICE_PASS` | | | Y
- `NOVA_GLANCE_HOST` | | | N
- `NOVA_NEUTRON_HOST` | | | N
+ `NOVA_GLANCE_API_URLS` | | | N
+ `NOVA_NEUTRON_SERVER_URL` | | | N
+ `NOVA_IRONIC_API_ENDPOINT` | | | N
  `NOVA_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
 
 ## Examples
@@ -34,7 +35,8 @@
         --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
         --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
-        --env NOVA_GLANCE_API_HOST="$GLANCE_API_HOSTNAME" \
-        --env NOVA_NEUTRON_SERVER_HOST="$NEUTRON_SERVER_HOSTNAME" \
+        --env NOVA_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
+        --env NOVA_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
+        --env NOVA_IRONIC_API_ENDPOINT="http://$IRONIC_API_HOSTNAME:6385/v1" \
         --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
         os-nova-conductor
