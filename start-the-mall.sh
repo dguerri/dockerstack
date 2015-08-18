@@ -20,7 +20,9 @@ NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME=nova-api.os-in-a-box
 NOVA_SCHEDULER_HOSTNAME=nova-scheduler.os-in-a-box
 SWIFT_PROXY_HOSTNAME=swift-proxy.os-in-a-box
-SWIFT_ACCOUNT_HOSTNAME=swift-account1.os-in-a-box
+SWIFT_ACCOUNT_HOSTNAME=swift-account.os-in-a-box
+SWIFT_CONTAINER_HOSTNAME=swift-container.os-in-a-box
+SWIFT_OBJECT_HOSTNAME=swift-object.os-in-a-box
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
 KEYSTONE_DB_USER=keystone
@@ -82,7 +84,7 @@ get_container_ip() {
 }
 
 # Create images
-make -j5
+make
 
 # Start containers
 # ----[ AutoDNS
@@ -509,6 +511,36 @@ docker run -d \
 wait_host "$SWIFT_ACCOUNT_HOSTNAME" 6002
 account_ip=$(get_container_ip $SWIFT_ACCOUNT_HOSTNAME)
 
+# ----[ Swift Container
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$SWIFT_CONTAINER_HOSTNAME" \
+    --hostname "$SWIFT_CONTAINER_HOSTNAME" \
+    --volume /etc/swift/rings:/etc/swift/rings \
+    --volume /srv/node/dev1:/srv/node/dev1 \
+    --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
+    --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
+    --expose 6001 \
+    os-swift-container
+
+wait_host "$SWIFT_CONTAINER_HOSTNAME" 6001
+container_ip=$(get_container_ip $SWIFT_CONTAINER_HOSTNAME)
+
+# ----[ Swift Object
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$SWIFT_OBJECT_HOSTNAME" \
+    --hostname "$SWIFT_OBJECT_HOSTNAME" \
+    --volume /etc/swift/rings:/etc/swift/rings \
+    --volume /srv/node/dev1:/srv/node/dev1 \
+    --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
+    --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
+    --expose 6000 \
+    os-swift-object
+
+wait_host "$SWIFT_OBJECT_HOSTNAME" 6000
+object_ip=$(get_container_ip $SWIFT_OBJECT_HOSTNAME)
+
 # ----[ Swift Proxy
 docker run -d \
     --restart=on-failure:10 \
@@ -525,6 +557,6 @@ docker run -d \
     --env SWIFT_REPLICA="3" \
     --env SWIFT_MIN_PART_HOURS="1" \
     --env SWIFT_ACCOUNT_BLOCK_DEVICES="r1z1-$account_ip:6002/dev1" \
-    --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-10.0.0.1:6001/sdb1,r1z1-10.0.0.2:6001/sdb1,r1z1-10.0.0.3:6001/sdb1" \
-    --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-10.0.0.1:6000/sdb1,r1z1-10.0.0.2:6000/sdb1,r1z1-10.0.0.3:6000/sdb1" \
+    --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-$account_ip:6001/dev1" \
+    --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$account_ip:6000/dev1" \
     os-swift-proxy

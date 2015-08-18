@@ -29,7 +29,9 @@ BASE_CONTAINERS :=	os-mysql \
 					os-ironic-conductor \
 					os-ironic-api \
 					os-swift-proxy \
-					os-swift-account
+					os-swift-account \
+					os-swift-object \
+					os-swift-container
 CLEAN_JOBS := $(addprefix clean-,${BASE_CONTAINERS})
 BUILD_JOBS := $(addprefix build-,${BASE_CONTAINERS})
 TEST_JOBS  := $(addprefix test-,${BASE_CONTAINERS})
