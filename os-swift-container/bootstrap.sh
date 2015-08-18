@@ -48,4 +48,4 @@ if [ "$DIR_COUNT" -lt 1 ]; then
 fi
 
 # Start the service
-swift-init -v -n object-server start
+swift-init -v -n container-server start
