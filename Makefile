@@ -16,8 +16,8 @@
 #
 
 BASE_CONTAINERS :=	os-mysql \
-					os-httpd \
-					os-tftpd \
+					os-httpboot \
+					os-tftpboot \
 					os-rabbitmq \
 					os-memcached \
 					os-keystone \

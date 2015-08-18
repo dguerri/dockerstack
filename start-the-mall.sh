@@ -24,6 +24,8 @@ SWIFT_ACCOUNT_HOSTNAME=swift-account.os-in-a-box
 SWIFT_CONTAINER_HOSTNAME=swift-container.os-in-a-box
 SWIFT_OBJECT_HOSTNAME=swift-object.os-in-a-box
 IRONIC_API_HOSTNAME=ironic-api.os-in-a-box
+IPXE_HTTPD_HOSTNAME=ipxe-httpd.os-in-a-box
+PXE_TFTPD_HOSTNAME=pxe-tftp.os-in-a-box
 
 MYSQL_ROOT_PASSWORD=ooGee9Eu2kichaib0oos
 KEYSTONE_DB_USER=keystone
@@ -48,6 +50,10 @@ AUTH_URI="http://$KEYSTONE_HOSTNAME:5000/v2.0"
 MEMCACHED_SERVERS="$MEMCACHED_HOSTNAME:11211"
 GLANCE_SWIFT_CONTAINER="glance"
 IRONIC_SWIFT_TEMPURL_KEY="TohNahNgab9ohSha4cheBail7za8Ohlei4ohb2oh"
+SWIFT_DEVS_DATA_CONTAINER_NAME=swift-devs-data
+SWIFT_RINGS_DATA_CONTAINER_NAME=swift-rings-data
+TFTPBOOT_DATA_CONTAINER_NAME=tftpboot-data
+HTTPBOOT_DATA_CONTAINER_NAME=httpboot-data
 
 SERVICE_TENANT_NAME=service
 KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
@@ -77,7 +83,7 @@ wait_host() {
         ret=$?
         set -e
         [ $ret -eq 0 ] && return 0
-        sleep 1 ; count="$((count-1))"
+        sleep 1 ; count="$((count - 1))"
     done
 
     return 1
@@ -461,13 +467,24 @@ docker run -d \
     --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-nova-scheduler
 
+# ---- [ Swift Data Containers
+docker create \
+    --volume /etc/swift/rings \
+    --name "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
+docker create \
+    --volume /srv/node/dev1 \
+    --name "$SWIFT_DEVS_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
 # ----[ Swift Account
 docker run -d \
     --restart=on-failure:10 \
     --name "$SWIFT_ACCOUNT_HOSTNAME" \
     --hostname "$SWIFT_ACCOUNT_HOSTNAME" \
-    --volume /etc/swift/rings:/etc/swift/rings \
-    --volume /srv/node/dev1:/srv/node/dev1 \
+    --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
+    --volumes-from "$SWIFT_DEVS_DATA_CONTAINER_NAME" \
     --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
     --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
     --expose 6002 \
@@ -481,8 +498,8 @@ docker run -d \
     --restart=on-failure:10 \
     --name "$SWIFT_CONTAINER_HOSTNAME" \
     --hostname "$SWIFT_CONTAINER_HOSTNAME" \
-    --volume /etc/swift/rings:/etc/swift/rings \
-    --volume /srv/node/dev1:/srv/node/dev1 \
+    --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
+    --volumes-from "$SWIFT_DEVS_DATA_CONTAINER_NAME" \
     --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
     --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
     --expose 6001 \
@@ -496,8 +513,8 @@ docker run -d \
     --restart=on-failure:10 \
     --name "$SWIFT_OBJECT_HOSTNAME" \
     --hostname "$SWIFT_OBJECT_HOSTNAME" \
-    --volume /etc/swift/rings:/etc/swift/rings \
-    --volume /srv/node/dev1:/srv/node/dev1 \
+    --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
+    --volumes-from "$SWIFT_DEVS_DATA_CONTAINER_NAME" \
     --env SWIFT_HASH_PATH_PREFIX="os-in-a-box" \
     --env SWIFT_HASH_PATH_SUFFIX="os-in-a-box" \
     --expose 6000 \
@@ -511,7 +528,7 @@ docker run -d \
     --restart=on-failure:10 \
     --name "$SWIFT_PROXY_HOSTNAME" \
     --hostname "$SWIFT_PROXY_HOSTNAME" \
-    --volume /etc/swift/rings:/etc/swift/rings \
+    --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
     --env SWIFT_IDENTITY_URI="$IDENTITY_URI" \
     --env SWIFT_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env SWIFT_SERVICE_USER="$SWIFT_SERVICE_USER" \
@@ -574,3 +591,37 @@ docker run -d \
     os-glance-api
 
 wait_host "$GLANCE_API_HOSTNAME" 9292
+
+# ----[ TFTPboot data container
+docker create \
+    --volume /tftpboot \
+    --name "$TFTPBOOT_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
+# ----[ TFTPd server(PXE)
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:69:69/udp \
+    --name "$PXE_TFTPD_HOSTNAME" \
+    --hostname "$PXE_TFTPD_HOSTNAME" \
+    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME":ro \
+    os-tftpboot
+
+wait_host "$PXE_TFTPD_HOSTNAME"
+
+# ----[ HTTPboot data container
+docker create \
+    --volume /httpboot \
+    --name "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
+# ----[ Apache server (iPXE)
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:8090:80/tcp \
+    --name "$IPXE_HTTPD_HOSTNAME" \
+    --hostname "$IPXE_HTTPD_HOSTNAME" \
+    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME":ro \
+    os-httpboot
+
+wait_host "$IPXE_HTTPD_HOSTNAME" 80
