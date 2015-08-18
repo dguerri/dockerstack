@@ -252,7 +252,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
-            service-create --name swift --type object
+            service-create --name swift --type object-store
 
 docker exec -i "$KEYSTONE_HOSTNAME" \
     keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
@@ -557,6 +557,6 @@ docker run -d \
     --env SWIFT_REPLICA="3" \
     --env SWIFT_MIN_PART_HOURS="1" \
     --env SWIFT_ACCOUNT_BLOCK_DEVICES="r1z1-$account_ip:6002/dev1" \
-    --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-$account_ip:6001/dev1" \
-    --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$account_ip:6000/dev1" \
+    --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-$container_ip:6001/dev1" \
+    --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$object_ip:6000/dev1" \
     os-swift-proxy
