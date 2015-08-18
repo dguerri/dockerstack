@@ -33,6 +33,8 @@ COPY glance-api.conf /etc/glance/glance-api.conf
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
+VOLUME /var/lib/glance/images/
+
 EXPOSE 9292
 
 ENTRYPOINT ["/etc/bootstrap.sh"]

@@ -15,6 +15,11 @@
  `GLANCE_SERVICE_TENANT_NAME` | Glance service tenant name | `service` | N
  `GLANCE_SERVICE_USER` | Glance service tenant user | `glance` | N
  `GLANCE_SERVICE_PASS` | Glance service tenant password | None | Y
+ `GLANCE_USE_SWIFT` | Whether to use swift as glance backend | `false` | N
+ `GLANCE_SWIFT_AUTH_ADDR` | Auth address for swift (keystone auth endpoint) | `127.0.0.1:5000/v2.0/` | N
+ `GLANCE_SWIFT_USER` | | `service:glance` | N
+ `GLANCE_SWIFT_PASS` | | `""` | N
+ `GLANCE_SWIFT_CONTAINER` | | `glance` | N
 
 ## Examples
 

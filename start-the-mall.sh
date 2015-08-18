@@ -43,7 +43,9 @@ NOVA_RABBITMQ_USER=nova
 NOVA_RABBITMQ_PASS=gai4jaiwohShoo0quaf0
 
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
+AUTH_URI="http://$KEYSTONE_HOSTNAME:5000/v2.0"
 MEMCACHED_SERVERS="$MEMCACHED_HOSTNAME:11211"
+GLANCE_SWIFT_CONTAINER="glance"
 
 SERVICE_TENANT_NAME=service
 KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
@@ -353,47 +355,6 @@ docker exec -i "$RABBITMQ_HOSTNAME" \
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$NOVA_RABBITMQ_USER" ".*" ".*" ".*"
 
-# ----[ Glance Registry
-docker run -d \
-    --restart=on-failure:10 \
-    --publish 0.0.0.0:9191:9191/tcp \
-    --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
-    --env GLANCE_DB_USER="$GLANCE_DB_USER" \
-    --env GLANCE_DB_PASS="$GLANCE_DB_PASS" \
-    --env GLANCE_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
-    --env GLANCE_RABBITMQ_USER="$GLANCE_RABBITMQ_USER" \
-    --env GLANCE_RABBITMQ_PASS="$GLANCE_RABBITMQ_PASS" \
-    --env GLANCE_IDENTITY_URI="$IDENTITY_URI" \
-    --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
-    --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
-    --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
-    --name "$GLANCE_REGISTRY_HOSTNAME" \
-    --hostname "$GLANCE_REGISTRY_HOSTNAME" \
-    os-glance-registry
-
-wait_host "$GLANCE_REGISTRY_HOSTNAME" 9191
-
-# ----[ Glance API
-docker run -d \
-    --restart=on-failure:10 \
-    --publish 0.0.0.0:9292:9292/tcp \
-    --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
-    --env GLANCE_DB_USER="$GLANCE_DB_USER" \
-    --env GLANCE_DB_PASS="$GLANCE_DB_PASS" \
-    --env GLANCE_REGISTRY_HOST="$GLANCE_REGISTRY_HOSTNAME" \
-    --env GLANCE_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
-    --env GLANCE_RABBITMQ_USER="$GLANCE_RABBITMQ_USER" \
-    --env GLANCE_RABBITMQ_PASS="$GLANCE_RABBITMQ_PASS" \
-    --env GLANCE_IDENTITY_URI="$IDENTITY_URI" \
-    --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
-    --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
-    --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
-    --name "$GLANCE_API_HOSTNAME" \
-    --hostname "$GLANCE_API_HOSTNAME" \
-    os-glance-api
-
-wait_host "$GLANCE_API_HOSTNAME" 9292
-
 # ----[ Neutron Server
 docker run -d \
     --restart=on-failure:10 \
@@ -560,3 +521,51 @@ docker run -d \
     --env SWIFT_CONTAINER_BLOCK_DEVICES="r1z1-$container_ip:6001/dev1" \
     --env SWIFT_OBJECT_BLOCK_DEVICES="r1z1-$object_ip:6000/dev1" \
     os-swift-proxy
+
+wait_host "$SWIFT_PROXY_HOSTNAME" 8080
+
+# ----[ Glance Registry
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:9191:9191/tcp \
+    --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
+    --env GLANCE_DB_USER="$GLANCE_DB_USER" \
+    --env GLANCE_DB_PASS="$GLANCE_DB_PASS" \
+    --env GLANCE_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env GLANCE_RABBITMQ_USER="$GLANCE_RABBITMQ_USER" \
+    --env GLANCE_RABBITMQ_PASS="$GLANCE_RABBITMQ_PASS" \
+    --env GLANCE_IDENTITY_URI="$IDENTITY_URI" \
+    --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
+    --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
+    --name "$GLANCE_REGISTRY_HOSTNAME" \
+    --hostname "$GLANCE_REGISTRY_HOSTNAME" \
+    os-glance-registry
+
+wait_host "$GLANCE_REGISTRY_HOSTNAME" 9191
+
+# ----[ Glance API
+docker run -d \
+    --restart=on-failure:10 \
+    --publish 0.0.0.0:9292:9292/tcp \
+    --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
+    --env GLANCE_DB_USER="$GLANCE_DB_USER" \
+    --env GLANCE_DB_PASS="$GLANCE_DB_PASS" \
+    --env GLANCE_REGISTRY_HOST="$GLANCE_REGISTRY_HOSTNAME" \
+    --env GLANCE_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env GLANCE_RABBITMQ_USER="$GLANCE_RABBITMQ_USER" \
+    --env GLANCE_RABBITMQ_PASS="$GLANCE_RABBITMQ_PASS" \
+    --env GLANCE_IDENTITY_URI="$IDENTITY_URI" \
+    --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
+    --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
+    --env GLANCE_USE_SWIFT=true \
+    --env GLANCE_SWIFT_AUTH_URI="$AUTH_URI" \
+    --env GLANCE_SWIFT_USER="$GLANCE_SERVICE_USER" \
+    --env GLANCE_SWIFT_PASS="$GLANCE_SERVICE_PASS" \
+    --env GLANCE_SWIFT_CONTAINER="$GLANCE_SWIFT_CONTAINER" \
+    --name "$GLANCE_API_HOSTNAME" \
+    --hostname "$GLANCE_API_HOSTNAME" \
+    os-glance-api
+
+wait_host "$GLANCE_API_HOSTNAME" 9292
