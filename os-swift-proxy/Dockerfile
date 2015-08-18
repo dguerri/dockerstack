@@ -23,6 +23,7 @@ RUN set -x \
     && apt-get -y install \
         swift \
         swift-proxy \
+        python-swiftclient \
         python-keystoneclient \
         python-keystonemiddleware \
     && apt-get -y clean
