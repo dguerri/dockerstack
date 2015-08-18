@@ -16,8 +16,9 @@
  `GLANCE_SERVICE_USER` | Glance service tenant user | `glance` | N
  `GLANCE_SERVICE_PASS` | Glance service tenant password | None | Y
  `GLANCE_USE_SWIFT` | Whether to use swift as glance backend | `false` | N
- `GLANCE_SWIFT_AUTH_ADDR` | Auth address for swift (keystone auth endpoint) | `127.0.0.1:5000/v2.0/` | N
- `GLANCE_SWIFT_USER` | | `service:glance` | N
+ `GLANCE_SWIFT_AUTH_ADDR` | Auth address for swift (keystone auth endpoint) | `http://127.0.0.1:5000/v2.0/` | N
+ `GLANCE_SWIFT_TENANT_NAME` | | `service` | N
+ `GLANCE_SWIFT_USER` | | `glance` | N
  `GLANCE_SWIFT_PASS` | | `""` | N
  `GLANCE_SWIFT_CONTAINER` | | `glance` | N
 
@@ -34,6 +35,7 @@
         --env GLANCE_RABBITMQ_PASS="$GLANCE_RABBITMQ_PASS" \
         --env GLANCE_IDENTITY_URI="$IDENTITY_URI" \
         --env GLANCE_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+        --env GLANCE_SWIFT_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env GLANCE_SERVICE_USER="$GLANCE_SERVICE_USER" \
         --env GLANCE_SERVICE_PASS="$GLANCE_SERVICE_PASS" \
         --name "$GLANCE_REGISTRY_HOSTNAME" \
