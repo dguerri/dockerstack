@@ -23,9 +23,6 @@ set -o pipefail
 
 
 # Environment variables default values setup
-NOVA_DB_HOST="${NOVA_DB_HOST:-localhost}"
-NOVA_DB_USER="${NOVA_DB_USER:-nova}"
-#NOVA_DB_PASS
 NOVA_RABBITMQ_HOST="${NOVA_RABBITMQ_HOST:-localhost}"
 NOVA_RABBITMQ_USER="${NOVA_RABBITMQ_USER:-nova}"
 #NOVA_RABBITMQ_PASS
@@ -40,30 +37,33 @@ NOVA_USE_IRONIC="${NOVA_USE_IRONIC:-false}"
 NOVA_MEMCACHED_SERVERS="${NOVA_MEMCACHED_SERVERS:-}"
 
 NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
-DATABASE_CONNECTION=\
-"mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
-CONFIG_FILE="/etc/nova/nova.conf"
+NOVA_CONFIG_FILE="/etc/nova/nova.conf"
+NOVA_COMPUTE_CONFIG_FILE="/etc/nova/nova-compute.conf"
+if [ "$NOVA_USE_IRONIC" == "true" ]; then
+    COMPUTE_DRIVER="nova.virt.ironic.IronicDriver"
+else
+    COMPUTE_DRIVER="libvirt.LibvirtDriver"
+    /etc/init.d/libvirt-bin start
+fi
 
 # Configure the service with environment variables defined
-sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_RABBITMQ_HOST%#${NOVA_RABBITMQ_HOST}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_RABBITMQ_USER%#${NOVA_RABBITMQ_USER}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_RABBITMQ_PASS%#${NOVA_RABBITMQ_PASS}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_IDENTITY_URI%#${NOVA_IDENTITY_URI}#" "$CONFIG_FILE"
+sed -i "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_RABBITMQ_HOST%#${NOVA_RABBITMQ_HOST}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_RABBITMQ_USER%#${NOVA_RABBITMQ_USER}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_RABBITMQ_PASS%#${NOVA_RABBITMQ_PASS}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_IDENTITY_URI%#${NOVA_IDENTITY_URI}#" "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_SERVICE_TENANT_NAME%#${NOVA_SERVICE_TENANT_NAME}#" \
-    "$CONFIG_FILE"
-sed -i "s#%NOVA_SERVICE_USER%#${NOVA_SERVICE_USER}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_SERVICE_PASS%#${NOVA_SERVICE_PASS}#" "$CONFIG_FILE"
-sed -i "s#%NOVA_GLANCE_API_URLS%#${NOVA_GLANCE_API_URLS}#" "$CONFIG_FILE"
+    "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_SERVICE_USER%#${NOVA_SERVICE_USER}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_SERVICE_PASS%#${NOVA_SERVICE_PASS}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_GLANCE_API_URLS%#${NOVA_GLANCE_API_URLS}#" "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_NEUTRON_SERVER_URL%#${NOVA_NEUTRON_SERVER_URL}#" \
-    "$CONFIG_FILE"
+    "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_IRONIC_API_ENDPOINT%#${NOVA_IRONIC_API_ENDPOINT}#" \
-    "$CONFIG_FILE"
-sed -i "s#%NOVA_MEMCACHED_SERVERS%#${NOVA_MEMCACHED_SERVERS}#" "$CONFIG_FILE"
-
-# Migrate nova database
-sudo -u nova nova-manage -v db sync
+    "$NOVA_CONFIG_FILE"
+sed -i "s#%NOVA_MEMCACHED_SERVERS%#${NOVA_MEMCACHED_SERVERS}#" \
+    "$NOVA_CONFIG_FILE"
+sed -i "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_COMPUTE_CONFIG_FILE"
 
 # Start the service
-nova-api
+nova-compute

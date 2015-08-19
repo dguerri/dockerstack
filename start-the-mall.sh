@@ -19,6 +19,7 @@ NEUTRON_DHCP_AGENT_HOSTNAME=neutron-dhcp-agent.os-in-a-box
 NOVA_CONDUCTOR_HOSTNAME=nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME=nova-api.os-in-a-box
 NOVA_SCHEDULER_HOSTNAME=nova-scheduler.os-in-a-box
+NOVA_COMPUTE_HOSTNAME=nova-compute.os-in-a-box
 SWIFT_PROXY_HOSTNAME=swift-proxy.os-in-a-box
 SWIFT_ACCOUNT_HOSTNAME=swift-account.os-in-a-box
 SWIFT_CONTAINER_HOSTNAME=swift-container.os-in-a-box
@@ -466,6 +467,27 @@ docker run -d \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
     --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-nova-scheduler
+
+# ----[ Nova Compute
+docker run -d \
+    --restart=on-failure:10 \
+    --privileged=true \
+     --volume=/lib/modules:/lib/modules:ro \
+    --name "$NOVA_COMPUTE_HOSTNAME" \
+    --hostname "$NOVA_COMPUTE_HOSTNAME" \
+    --env NOVA_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env NOVA_RABBITMQ_USER="$NOVA_RABBITMQ_USER" \
+    --env NOVA_RABBITMQ_PASS="$NOVA_RABBITMQ_PASS" \
+    --env NOVA_IDENTITY_URI="$IDENTITY_URI" \
+    --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
+    --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+    --env NOVA_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
+    --env NOVA_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
+    --env NOVA_IRONIC_API_ENDPOINT="http://$IRONIC_API_HOSTNAME:6385/v1" \
+    --env NOVA_USE_IRONIC="true" \
+    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    os-nova-compute
 
 # ---- [ Swift Data Containers
 docker create \

@@ -27,6 +27,7 @@ BASE_CONTAINERS :=	os-mysql \
 					os-nova-conductor \
 					os-nova-api \
 					os-nova-scheduler \
+					os-nova-compute \
 					os-neutron-dhcp-agent \
 					os-ironic-conductor \
 					os-ironic-api \
