@@ -19,7 +19,7 @@ FROM ubuntu:14.04
 MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 RUN set -x \
-    && apt-get -y install tftpd-hpa
+    && apt-get -y install tftpd-hpa syslinux-common syslinux ipxe
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
@@ -30,4 +30,4 @@ VOLUME /tftpboot
 EXPOSE 69/udp
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
-CMD ["-L", "--verbose", "-m", "/tftpboot/map-file", "-u", "tftp", "--secure", "/tftpboot"]
+CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/tftpboot/map-file", "/tftpboot"]

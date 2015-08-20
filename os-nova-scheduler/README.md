@@ -15,6 +15,7 @@
  `NOVA_SERVICE_USER` | | | N
  `NOVA_SERVICE_PASS` | | | Y
  `NOVA_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
+ `NOVA_USE_IRONIC` | | `false` | N
 
 ## Examples
 
@@ -33,4 +34,5 @@
         --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
         --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
         --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
+        --env NOVA_USE_IRONIC="true"
         os-nova-scheduler

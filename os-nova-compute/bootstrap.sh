@@ -43,10 +43,15 @@ NOVA_IRONIC_SERVICE_TENANT_NAME="${NOVA_IRONIC_SERVICE_TENANT_NAME:-service}"
 NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 NOVA_CONFIG_FILE="/etc/nova/nova.conf"
 NOVA_COMPUTE_CONFIG_FILE="/etc/nova/nova-compute.conf"
-if [ "$NOVA_USE_IRONIC" == "true" ]; then
+if [ "$NOVA_USE_IRONIC" == "true" -o "$NOVA_USE_IRONIC" == "True" ]; then
+    FIREWALL_DRIVER="nova.virt.firewall.NoopFirewallDriver"
     COMPUTE_DRIVER="nova.virt.ironic.IronicDriver"
+    COMPUTE_MANAGER="ironic.nova.compute.manager.ClusteredComputeManager"
 else
+    FIREWALL_DRIVER=""
     COMPUTE_DRIVER="libvirt.LibvirtDriver"
+    COMPUTE_MANAGER="nova.compute.manager.ComputeManager"
+
     /etc/init.d/libvirt-bin start
 fi
 
@@ -69,12 +74,18 @@ sed -i \
     "s#%NOVA_IRONIC_SERVICE_TENANT_NAME%#${NOVA_IRONIC_SERVICE_TENANT_NAME}#" \
     "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_GLANCE_API_URLS%#${NOVA_GLANCE_API_URLS}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_CONFIG_FILE"
+
 sed -i "s#%NOVA_NEUTRON_SERVER_URL%#${NOVA_NEUTRON_SERVER_URL}#" \
     "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_IRONIC_API_ENDPOINT%#${NOVA_IRONIC_API_ENDPOINT}#" \
     "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_MEMCACHED_SERVERS%#${NOVA_MEMCACHED_SERVERS}#" \
     "$NOVA_CONFIG_FILE"
+sed -i "s#%FIREWALL_DRIVER%#${FIREWALL_DRIVER}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_CONFIG_FILE"
+sed -i "s#%COMPUTE_MANAGER%#${COMPUTE_MANAGER}#" "$NOVA_CONFIG_FILE"
+
 sed -i "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_COMPUTE_CONFIG_FILE"
 
 # Start the service
