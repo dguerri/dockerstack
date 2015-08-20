@@ -550,7 +550,7 @@ docker run -d \
 docker run -d \
     --restart=always \
     --privileged=true \
-     --volume=/lib/modules:/lib/modules:ro \
+    --volume=/lib/modules:/lib/modules:ro \
     --name "$NOVA_COMPUTE_HOSTNAME" \
     --hostname "$NOVA_COMPUTE_HOSTNAME" \
     --env NOVA_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
