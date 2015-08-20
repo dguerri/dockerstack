@@ -33,4 +33,6 @@ COPY ironic.conf /etc/ironic/ironic.conf
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
+EXPOSE 6385
+
 ENTRYPOINT ["/etc/bootstrap.sh"]

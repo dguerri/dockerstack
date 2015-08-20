@@ -37,6 +37,8 @@ NEUTRON_DB_USER=neutron
 NEUTRON_DB_PASS=iejo6iec0xahshoep5Sh
 NOVA_DB_USER=nova
 NOVA_DB_PASS=shei6veelei4ofah8Aep
+IRONIC_DB_USER=ironic
+IRONIC_DB_PASS=Baeluthac4iNohfo4eip
 
 RABBITMQ_ERLANG_COOKIE=xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
 GLANCE_RABBITMQ_USER=glance
@@ -45,6 +47,8 @@ NEUTRON_RABBITMQ_USER=neutron
 NEUTRON_RABBITMQ_PASS=oohai7geiRooChie5oQu
 NOVA_RABBITMQ_USER=nova
 NOVA_RABBITMQ_PASS=gai4jaiwohShoo0quaf0
+IRONIC_RABBITMQ_USER=ironic
+IRONIC_RABBITMQ_PASS=aeG1hu1Ik2ja0vua5aeg
 
 IDENTITY_URI="http://$KEYSTONE_HOSTNAME:35357"
 AUTH_URI="http://$KEYSTONE_HOSTNAME:5000/v2.0"
@@ -67,6 +71,10 @@ NOVA_SERVICE_USER=nova
 NOVA_SERVICE_PASS=as0aMi4thaishaegae1e
 SWIFT_SERVICE_USER=swift
 SWIFT_SERVICE_PASS=aeya8la0eey5peih1Sa9
+IRONIC_SERVICE_USER=ironic
+IRONIC_SERVICE_PASS=euch1meeCooNgeaYiSah
+IRONIC_SWIFT_TEMP_URL_KEY=ahtui7veer7OoChaesoh0aich9coh3Iu5kaishoh
+
 
 wait_host() {
     local hostname="$1"
@@ -150,6 +158,12 @@ sed "s#%NEUTRON_DB_USER%#${NEUTRON_DB_USER:-neutron}#g;\
 sed "s#%NOVA_DB_USER%#${NOVA_DB_USER:-nova}#g;\
      s#%NOVA_DB_PASS%#${NOVA_DB_PASS}#g" \
         "$SCRIPT_DIR/sql_scripts/nova.sql" | \
+    docker exec -i "$MYSQL_HOSTNAME" \
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
+
+sed "s#%IRONIC_DB_USER%#${IRONIC_DB_USER:-ironic}#g;\
+     s#%IRONIC_DB_PASS%#${IRONIC_DB_PASS}#g" \
+        "$SCRIPT_DIR/sql_scripts/ironic.sql" | \
     docker exec -i "$MYSQL_HOSTNAME" \
         mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -h "localhost"
 
@@ -338,6 +352,38 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
                 http://${NOVA_API_HOSTNAME}:8774/v2/%\(tenant_id\)s \
             --region regionOne
 
+# Ironic API
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-create --name "$IRONIC_SERVICE_USER" \
+                --pass "$IRONIC_SERVICE_PASS" \
+                --tenant "$SERVICE_TENANT_NAME"
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            user-role-add --tenant "$SERVICE_TENANT_NAME" \
+                --user "$IRONIC_SERVICE_USER" --role admin
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            service-create --name ironic --type baremetal
+
+docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone --os-token "$KEYSTONE_SERVICE_TOKEN" \
+        --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
+            endpoint-create \
+            --service ironic \
+            --publicurl \
+                http://$IRONIC_API_HOSTNAME:6385/ \
+            --internalurl \
+                http://$IRONIC_API_HOSTNAME:6385/ \
+            --adminurl \
+                http://$IRONIC_API_HOSTNAME:6385/ \
+            --region regionOne
+
 # ----[ RabbitMQ
 docker run -d \
     --restart=on-failure:10 \
@@ -356,6 +402,8 @@ docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl add_user "$NEUTRON_RABBITMQ_USER" "$NEUTRON_RABBITMQ_PASS"
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl add_user "$NOVA_RABBITMQ_USER" "$NOVA_RABBITMQ_PASS"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl add_user "$IRONIC_RABBITMQ_USER" "$IRONIC_RABBITMQ_PASS"
 
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$GLANCE_RABBITMQ_USER" ".*" ".*" ".*"
@@ -363,6 +411,8 @@ docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$NEUTRON_RABBITMQ_USER" ".*" ".*" ".*"
 docker exec -i "$RABBITMQ_HOSTNAME" \
     rabbitmqctl set_permissions "$NOVA_RABBITMQ_USER" ".*" ".*" ".*"
+docker exec -i "$RABBITMQ_HOSTNAME" \
+    rabbitmqctl set_permissions "$IRONIC_RABBITMQ_USER" ".*" ".*" ".*"
 
 # ----[ Neutron Server
 docker run -d \
@@ -387,6 +437,32 @@ docker run -d \
     os-neutron-server
 
 wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
+
+# ----[ Ironic API
+docker run -d \
+    --restart=on-failure:10 \
+    --name "$IRONIC_API_HOSTNAME" \
+    --hostname "$IRONIC_API_HOSTNAME" \
+    --publish 0.0.0.0:6385:6385/tcp \
+    --env IRONIC_DB_HOST="$MYSQL_HOSTNAME" \
+    --env IRONIC_DB_USER="$IRONIC_DB_USER" \
+    --env IRONIC_DB_PASS="$IRONIC_DB_PASS" \
+    --env IRONIC_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env IRONIC_RABBITMQ_USER="$IRONIC_RABBITMQ_USER" \
+    --env IRONIC_RABBITMQ_PASS="$IRONIC_RABBITMQ_PASS" \
+    --env IRONIC_IDENTITY_URI="$IDENTITY_URI" \
+    --env IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env IRONIC_SERVICE_USER="$IRONIC_SERVICE_USER" \
+    --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
+    --env IRONIC_SWIFT_TEMP_URL_KEY="$IRONIC_SWIFT_TEMP_URL_KEY" \
+    --env IRONIC_SWIFT_ENDPOINT_URL="http://$SWIFT_PROXY_HOSTNAME:8080" \
+    --env IRONIC_SWIFT_ACCOUNT="$SERVICE_TENANT_NAME:$IRONIC_SERVICE_USER" \
+    --env IRONIC_SWIFT_CONTAINER="glance" \
+    --env IRONIC_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
+    --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
+    --env IRONIC_CLEAN_NODE=true \
+    --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    os-ironic-api
 
 # ----[ Neutron DHCP agent
 docker run -d \
@@ -478,6 +554,7 @@ docker run -d \
     --env NOVA_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
     --env NOVA_RABBITMQ_USER="$NOVA_RABBITMQ_USER" \
     --env NOVA_RABBITMQ_PASS="$NOVA_RABBITMQ_PASS" \
+    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     --env NOVA_IDENTITY_URI="$IDENTITY_URI" \
     --env NOVA_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
@@ -486,7 +563,10 @@ docker run -d \
     --env NOVA_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
     --env NOVA_IRONIC_API_ENDPOINT="http://$IRONIC_API_HOSTNAME:6385/v1" \
     --env NOVA_USE_IRONIC="true" \
-    --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    --env NOVA_IRONIC_SERVICE_USER="$IRONIC_SERVICE_USER" \
+    --env NOVA_IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
+    --env NOVA_IRONIC_AUTH_URI="$AUTH_URI" \
+    --env NOVA_IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     os-nova-compute
 
 # ---- [ Swift Data Containers

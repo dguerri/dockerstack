@@ -23,7 +23,9 @@ RUN set -x \
 
 VOLUME /tftpboot
 
+RUN touch /tftpboot/map-file
+
 EXPOSE 69/udp
 
 ENTRYPOINT ["in.tftpd"]
-CMD ["-L", "--verbose", "-m", "/tftpboot/mapfile", "-u", "tftp", "--secure", "/tftpboot"]
+CMD ["-L", "--verbose", "-m", "/tftpboot/map-file", "-u", "tftp", "--secure", "/tftpboot"]
