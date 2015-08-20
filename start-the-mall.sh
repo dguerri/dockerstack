@@ -451,7 +451,7 @@ docker run -d \
     --publish 0.0.0.0:69:69/udp \
     --name "$PXE_TFTPD_HOSTNAME" \
     --hostname "$PXE_TFTPD_HOSTNAME" \
-    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME":ro \
+    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME" \
     os-tftpboot
 
 wait_host "$PXE_TFTPD_HOSTNAME"
@@ -469,7 +469,7 @@ docker run -d \
     --publish 0.0.0.0:8090:80/tcp \
     --name "$IPXE_HTTPD_HOSTNAME" \
     --hostname "$IPXE_HTTPD_HOSTNAME" \
-    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME":ro \
     os-httpboot
 
 wait_host "$IPXE_HTTPD_HOSTNAME" 80
@@ -537,7 +537,9 @@ wait_host "$IRONIC_API_HOSTNAME" 6385
 docker run -d \
     --restart=always \
     --privileged=true \
-     --volume=/lib/modules:/lib/modules:ro \
+    --name "$NEUTRON_DHCP_AGENT_HOSTNAME" \
+    --hostname "$NEUTRON_DHCP_AGENT_HOSTNAME" \
+    --volume=/lib/modules:/lib/modules:ro \
     --env NEUTRON_IDENTITY_URI="$IDENTITY_URI" \
     --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
@@ -545,8 +547,7 @@ docker run -d \
     --env NEUTRON_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
     --env NEUTRON_RABBITMQ_USER="$NEUTRON_RABBITMQ_USER" \
     --env NEUTRON_RABBITMQ_PASS="$NEUTRON_RABBITMQ_PASS" \
-    --name "$NEUTRON_DHCP_AGENT_HOSTNAME" \
-    --hostname "$NEUTRON_DHCP_AGENT_HOSTNAME" \
+    --env NEUTRON_ENABLE_IPXE="true" \
     os-neutron-dhcp-agent
 
 # ----[ Nova Conductor

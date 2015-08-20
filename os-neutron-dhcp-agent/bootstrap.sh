@@ -31,14 +31,22 @@ NEUTRON_RABBITMQ_USER="${NEUTRON_RABBITMQ_USER:-guest}"
 NEUTRON_RABBITMQ_PASS="${NEUTRON_RABBITMQ_PASS:-guest}"
 NEUTRON_EXTERNAL_NETWORKS="${NEUTRON_EXTERNAL_NETWORKS:-external}"
 NEUTRON_BRIDGE_MAPPINGS="${NEUTRON_BRIDGE_MAPPINGS:-external:br-ex}"
+NEUTRON_ENABLE_IPXE="${NEUTRON_ENABLE_IPXE:-false}"
 
 MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 MY_SUBNET="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $4}')"
 MY_GW=$(ip route show | awk '/default/ {print $3}')
 TUNNEL_LOCAL_IP="$MY_IP"
 NEUTRON_CONFIG_FILE="/etc/neutron/neutron.conf"
-#DHCP_AGENT_CONFIG_FILE="/etc/neutron/dhcp_agent.ini"
+DHCP_AGENT_CONFIG_FILE="/etc/neutron/dhcp_agent.ini"
 PLUGIN_ML2_CONFIG_FILE="/etc/neutron/plugins/ml2/ml2_conf.ini"
+
+if [ "$NEUTRON_ENABLE_IPXE" == "true" -o "$NEUTRON_ENABLE_IPXE" == "True" ];
+then
+    DNSMASQ_CONFIG_FILE="/etc/dnsmasq-ipxe.conf"
+else
+    DNSMASQ_CONFIG_FILE=""
+fi
 
 # Configure the service with environment variables defined
 sed -i "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
@@ -55,6 +63,9 @@ sed -i "s#%NEUTRON_RABBITMQ_USER%#${NEUTRON_RABBITMQ_USER}#" \
     "$NEUTRON_CONFIG_FILE"
 sed -i "s#%NEUTRON_RABBITMQ_PASS%#${NEUTRON_RABBITMQ_PASS}#" \
     "$NEUTRON_CONFIG_FILE"
+
+sed -i "s#%DNSMASQ_CONFIG_FILE%#${DNSMASQ_CONFIG_FILE}#" \
+    "$DHCP_AGENT_CONFIG_FILE"
 
 sed -i "s#%NEUTRON_EXTERNAL_NETWORKS%#${NEUTRON_EXTERNAL_NETWORKS}#" \
     "$PLUGIN_ML2_CONFIG_FILE"

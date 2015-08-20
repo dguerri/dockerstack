@@ -22,6 +22,7 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 RUN set -x \
     && apt-get -y install \
         nova-scheduler \
+        ironic-common \
         python-mysqldb \
     && apt-get -y clean \
     && rm -f /var/lib/nova/nova.sqlite

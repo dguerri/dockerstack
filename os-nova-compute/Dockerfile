@@ -23,6 +23,7 @@ RUN set -x \
     && apt-get -y install \
         nova-compute \
         python-ironicclient \
+        ironic-common \
     && apt-get -y clean \
     && rm -f /var/lib/nova/nova.sqlite
 
