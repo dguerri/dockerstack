@@ -108,7 +108,7 @@ make
 # Start containers
 # ----[ AutoDNS
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:53:53/udp \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --name "$AUTODNS_HOSTNAME" \
@@ -117,7 +117,7 @@ docker run -d \
 
 # ----[ MySQL
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --env MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
     --expose 3306 \
     --name "$MYSQL_HOSTNAME" \
@@ -128,7 +128,7 @@ wait_host "$MYSQL_HOSTNAME" 3306
 
 # ----[ Memcached
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --expose 11211 \
     --name "$MEMCACHED_HOSTNAME" \
     --hostname "$MEMCACHED_HOSTNAME" \
@@ -169,7 +169,7 @@ sed "s#%IRONIC_DB_USER%#${IRONIC_DB_USER:-ironic}#g;\
 
 # ----[ Keystone
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:5000:5000/tcp \
     --publish 0.0.0.0:35357:35357/tcp \
     --env KEYSTONE_SERVICE_TOKEN="$KEYSTONE_SERVICE_TOKEN" \
@@ -386,7 +386,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
 
 # ----[ RabbitMQ
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --env RABBITMQ_ERLANG_COOKIE="$RABBITMQ_ERLANG_COOKIE" \
     --expose 5672 \
     --name "$RABBITMQ_HOSTNAME" \
@@ -416,7 +416,7 @@ docker exec -i "$RABBITMQ_HOSTNAME" \
 
 # ----[ Neutron Server
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:9696:9696/tcp \
     --env NEUTRON_DB_HOST="$MYSQL_HOSTNAME" \
     --env NEUTRON_DB_USER="$NEUTRON_DB_USER" \
@@ -440,7 +440,7 @@ wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
 
 # ----[ Ironic API
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$IRONIC_API_HOSTNAME" \
     --hostname "$IRONIC_API_HOSTNAME" \
     --publish 0.0.0.0:6385:6385/tcp \
@@ -464,9 +464,11 @@ docker run -d \
     --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-ironic-api
 
+wait_host "$IRONIC_API_HOSTNAME" 6385
+
 # ----[ Neutron DHCP agent
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --privileged=true \
      --volume=/lib/modules:/lib/modules:ro \
     --env NEUTRON_IDENTITY_URI="$IDENTITY_URI" \
@@ -482,7 +484,7 @@ docker run -d \
 
 # ----[ Nova Conductor
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$NOVA_CONDUCTOR_HOSTNAME" \
     --hostname "$NOVA_CONDUCTOR_HOSTNAME" \
     --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \
@@ -503,7 +505,7 @@ docker run -d \
 
 # ----[ Nova API
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --privileged=true \
      --volume=/lib/modules:/lib/modules:ro \
     --name "$NOVA_API_HOSTNAME" \
@@ -528,7 +530,7 @@ wait_host "$NOVA_API_HOSTNAME" 8774
 
 # ----[ Nova Scheduler
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$NOVA_SCHEDULER_HOSTNAME" \
     --hostname "$NOVA_SCHEDULER_HOSTNAME" \
     --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \
@@ -546,7 +548,7 @@ docker run -d \
 
 # ----[ Nova Compute
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --privileged=true \
      --volume=/lib/modules:/lib/modules:ro \
     --name "$NOVA_COMPUTE_HOSTNAME" \
@@ -582,7 +584,7 @@ docker create \
 
 # ----[ Swift Account
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$SWIFT_ACCOUNT_HOSTNAME" \
     --hostname "$SWIFT_ACCOUNT_HOSTNAME" \
     --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
@@ -597,7 +599,7 @@ account_ip=$(get_container_ip $SWIFT_ACCOUNT_HOSTNAME)
 
 # ----[ Swift Container
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$SWIFT_CONTAINER_HOSTNAME" \
     --hostname "$SWIFT_CONTAINER_HOSTNAME" \
     --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
@@ -612,7 +614,7 @@ container_ip=$(get_container_ip $SWIFT_CONTAINER_HOSTNAME)
 
 # ----[ Swift Object
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$SWIFT_OBJECT_HOSTNAME" \
     --hostname "$SWIFT_OBJECT_HOSTNAME" \
     --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
@@ -627,7 +629,7 @@ object_ip=$(get_container_ip $SWIFT_OBJECT_HOSTNAME)
 
 # ----[ Swift Proxy
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --name "$SWIFT_PROXY_HOSTNAME" \
     --hostname "$SWIFT_PROXY_HOSTNAME" \
     --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
@@ -649,7 +651,7 @@ wait_host "$SWIFT_PROXY_HOSTNAME" 8080
 
 # ----[ Glance Registry
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:9191:9191/tcp \
     --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
     --env GLANCE_DB_USER="$GLANCE_DB_USER" \
@@ -669,7 +671,7 @@ wait_host "$GLANCE_REGISTRY_HOSTNAME" 9191
 
 # ----[ Glance API
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:9292:9292/tcp \
     --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
     --env GLANCE_DB_USER="$GLANCE_DB_USER" \
@@ -702,7 +704,7 @@ docker create \
 
 # ----[ TFTPd server(PXE)
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:69:69/udp \
     --name "$PXE_TFTPD_HOSTNAME" \
     --hostname "$PXE_TFTPD_HOSTNAME" \
@@ -719,7 +721,7 @@ docker create \
 
 # ----[ Apache server (iPXE)
 docker run -d \
-    --restart=always:10 \
+    --restart=always \
     --publish 0.0.0.0:8090:80/tcp \
     --name "$IPXE_HTTPD_HOSTNAME" \
     --hostname "$IPXE_HTTPD_HOSTNAME" \
