@@ -21,6 +21,7 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 # install packages
 RUN set -x \
     && apt-get -y install \
+        ipmitool \
         ironic-conductor \
         python-mysqldb \
     && apt-get -y clean \
@@ -35,8 +36,9 @@ RUN mkdir -p /httpboot && \
 
 VOLUME ["/tftpboot", "/httpboot"]
 
-# copy config file
+# copy config files
 COPY ironic.conf /etc/ironic/ironic.conf
+COPY agent_config.template /etc/ironic/agent_config.template
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh

@@ -1,0 +1,11 @@
+#!ipxe
+
+dhcp
+
+goto deploy
+
+:deploy
+kernel %IRONIC_IPXE_HTTP_URL/%{{ pxe_options.deployment_aki_path }} ip=${ip}:${next-server}:${gateway}:${netmask} BOOTIF=${mac} text {{ pxe_options.pxe_append_params }} ipa-api-url={{ pxe_options['ipa-api-url'] }} ipa-driver-name={{ pxe_options['ipa-driver-name'] }}
+
+initrd %IRONIC_IPXE_HTTP_URL/%{{ pxe_options.deployment_ari_path }}
+boot

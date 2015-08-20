@@ -25,6 +25,7 @@ SWIFT_ACCOUNT_HOSTNAME=swift-account.os-in-a-box
 SWIFT_CONTAINER_HOSTNAME=swift-container.os-in-a-box
 SWIFT_OBJECT_HOSTNAME=swift-object.os-in-a-box
 IRONIC_API_HOSTNAME=ironic-api.os-in-a-box
+IRONIC_CONDUCTOR_HOSTNAME=ironic-conductor.os-in-a-box
 IPXE_HTTPD_HOSTNAME=ipxe-httpd.os-in-a-box
 PXE_TFTPD_HOSTNAME=pxe-tftp.os-in-a-box
 
@@ -438,6 +439,72 @@ docker run -d \
 
 wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
 
+# ----[ TFTPboot data container
+docker create \
+    --volume /tftpboot \
+    --name "$TFTPBOOT_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
+# ----[ TFTPd server(PXE)
+docker run -d \
+    --restart=always \
+    --publish 0.0.0.0:69:69/udp \
+    --name "$PXE_TFTPD_HOSTNAME" \
+    --hostname "$PXE_TFTPD_HOSTNAME" \
+    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME":ro \
+    os-tftpboot
+
+wait_host "$PXE_TFTPD_HOSTNAME"
+tftpboot_server_ip=$(get_container_ip $PXE_TFTPD_HOSTNAME)
+
+# ----[ HTTPboot data container
+docker create \
+    --volume /httpboot \
+    --name "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    os-base-image /bin/true
+
+# ----[ Apache server (iPXE)
+docker run -d \
+    --restart=always \
+    --publish 0.0.0.0:8090:80/tcp \
+    --name "$IPXE_HTTPD_HOSTNAME" \
+    --hostname "$IPXE_HTTPD_HOSTNAME" \
+    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    os-httpboot
+
+wait_host "$IPXE_HTTPD_HOSTNAME" 80
+httpboot_server_ip=$(get_container_ip $IPXE_HTTPD_HOSTNAME)
+
+# ----[ Ironic Conductor
+docker run -d \
+    --restart=always \
+    --name "$IRONIC_CONDUCTOR_HOSTNAME" \
+    --hostname "$IRONIC_CONDUCTOR_HOSTNAME" \
+    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME" \
+    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    --env IRONIC_DB_HOST="$MYSQL_HOSTNAME" \
+    --env IRONIC_DB_USER="$IRONIC_DB_USER" \
+    --env IRONIC_DB_PASS="$IRONIC_DB_PASS" \
+    --env IRONIC_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+    --env IRONIC_RABBITMQ_USER="$IRONIC_RABBITMQ_USER" \
+    --env IRONIC_RABBITMQ_PASS="$IRONIC_RABBITMQ_PASS" \
+    --env IRONIC_IDENTITY_URI="$IDENTITY_URI" \
+    --env IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env IRONIC_SERVICE_USER="$IRONIC_SERVICE_USER" \
+    --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
+    --env IRONIC_SWIFT_TEMP_URL_KEY="$IRONIC_SWIFT_TEMP_URL_KEY" \
+    --env IRONIC_SWIFT_ENDPOINT_URL="http://$SWIFT_PROXY_HOSTNAME:8080" \
+    --env IRONIC_SWIFT_ACCOUNT="$SERVICE_TENANT_NAME:$IRONIC_SERVICE_USER" \
+    --env IRONIC_SWIFT_CONTAINER="glance" \
+    --env IRONIC_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
+    --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
+    --env IRONIC_CLEAN_NODE="false" \
+    --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    --env IRONIC_TFTP_SERVER="$tftpboot_server_ip" \
+    --env IRONIC_IPXE_HTTP_URL="http://$httpboot_server_ip:8090" \
+    --env IRONIC_USE_IPXE="true" \
+    os-ironic-conductor
+
 # ----[ Ironic API
 docker run -d \
     --restart=always \
@@ -460,7 +527,7 @@ docker run -d \
     --env IRONIC_SWIFT_CONTAINER="glance" \
     --env IRONIC_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
     --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
-    --env IRONIC_CLEAN_NODE=true \
+    --env IRONIC_CLEAN_NODE=false \
     --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     os-ironic-api
 
@@ -544,6 +611,7 @@ docker run -d \
     --env NOVA_SERVICE_USER="$NOVA_SERVICE_USER" \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
     --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+    --env NOVA_USE_IRONIC="true" \
     os-nova-scheduler
 
 # ----[ Nova Compute
@@ -695,37 +763,3 @@ docker run -d \
     os-glance-api
 
 wait_host "$GLANCE_API_HOSTNAME" 9292
-
-# ----[ TFTPboot data container
-docker create \
-    --volume /tftpboot \
-    --name "$TFTPBOOT_DATA_CONTAINER_NAME" \
-    os-base-image /bin/true
-
-# ----[ TFTPd server(PXE)
-docker run -d \
-    --restart=always \
-    --publish 0.0.0.0:69:69/udp \
-    --name "$PXE_TFTPD_HOSTNAME" \
-    --hostname "$PXE_TFTPD_HOSTNAME" \
-    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME":ro \
-    os-tftpboot
-
-wait_host "$PXE_TFTPD_HOSTNAME"
-
-# ----[ HTTPboot data container
-docker create \
-    --volume /httpboot \
-    --name "$HTTPBOOT_DATA_CONTAINER_NAME" \
-    os-base-image /bin/true
-
-# ----[ Apache server (iPXE)
-docker run -d \
-    --restart=always \
-    --publish 0.0.0.0:8090:80/tcp \
-    --name "$IPXE_HTTPD_HOSTNAME" \
-    --hostname "$IPXE_HTTPD_HOSTNAME" \
-    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME":ro \
-    os-httpboot
-
-wait_host "$IPXE_HTTPD_HOSTNAME" 80
