@@ -21,11 +21,13 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 RUN set -x \
     && apt-get -y install tftpd-hpa
 
-VOLUME /tftpboot
+# add bootstrap script and make it executable
+COPY bootstrap.sh /etc/bootstrap.sh
+RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
-RUN touch /tftpboot/map-file
+VOLUME /tftpboot
 
 EXPOSE 69/udp
 
-ENTRYPOINT ["in.tftpd"]
+ENTRYPOINT ["/etc/bootstrap.sh"]
 CMD ["-L", "--verbose", "-m", "/tftpboot/map-file", "-u", "tftp", "--secure", "/tftpboot"]
