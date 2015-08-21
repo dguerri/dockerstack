@@ -575,7 +575,7 @@ docker run -d \
 docker run -d \
     --restart=always \
     --privileged=true \
-     --volume=/lib/modules:/lib/modules:ro \
+    --volume=/lib/modules:/lib/modules:ro \
     --name "$NOVA_API_HOSTNAME" \
     --hostname "$NOVA_API_HOSTNAME" \
     --env NOVA_DB_HOST="$MYSQL_HOSTNAME" \

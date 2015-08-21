@@ -30,4 +30,4 @@ VOLUME /tftpboot
 EXPOSE 69/udp
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
-CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/tftpboot/map-file", "/tftpboot"]
+CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/tftpboot/map-file", "-L", "-u", "tftp", "--secure", "/tftpboot"]
