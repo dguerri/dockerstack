@@ -547,6 +547,7 @@ docker run -d \
     --env NEUTRON_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
     --env NEUTRON_RABBITMQ_USER="$NEUTRON_RABBITMQ_USER" \
     --env NEUTRON_RABBITMQ_PASS="$NEUTRON_RABBITMQ_PASS" \
+    --env NEUTRON_BRIDGE_MAPPINGS="external:br-ex" \
     --env NEUTRON_ENABLE_IPXE="true" \
     os-neutron-dhcp-agent
 
