@@ -14,6 +14,7 @@
  `NEUTRON_EXTERNAL_NETWORKS` | | `external` | N
  `NEUTRON_BRIDGE_MAPPINGS` | | `external:br-ex` | N
  `NEUTRON_ENABLE_IPXE` | | `false` | N
+ `EXTERNAL_INTERFACE_NAME` | External interface name to be bridged on br-ex | `ext1` | N
 
 ## Examples
 

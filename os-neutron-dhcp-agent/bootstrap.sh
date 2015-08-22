@@ -32,6 +32,7 @@ NEUTRON_RABBITMQ_PASS="${NEUTRON_RABBITMQ_PASS:-guest}"
 NEUTRON_EXTERNAL_NETWORKS="${NEUTRON_EXTERNAL_NETWORKS:-external}"
 NEUTRON_BRIDGE_MAPPINGS="${NEUTRON_BRIDGE_MAPPINGS:-external:br-ex}"
 NEUTRON_ENABLE_IPXE="${NEUTRON_ENABLE_IPXE:-false}"
+EXTERNAL_INTERFACE_NAME="${EXTERNAL_INTERFACE_NAME:-ext1}"
 
 MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 MY_SUBNET="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $4}')"
@@ -76,13 +77,11 @@ sed -i "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
 # Start OVS switch
 /etc/init.d/openvswitch-switch start
 
-# Create external bridge and attach eth0 to it
+# Create external bridge
+ovs-vsctl br-exists br-ex && del-br br-ex
 ovs-vsctl add-br br-ex
-ip addr del "$MY_IP" dev eth0
-ip addr add "$MY_IP/$MY_SUBNET" dev br-ex
 ip link set dev br-ex up
-ip route add default via "$MY_GW"
-ovs-vsctl add-port br-ex eth0
+ovs-vsctl add-port br-ex "$EXTERNAL_INTERFACE_NAME"
 
 # Start OVS agent
 /usr/bin/python /usr/bin/neutron-openvswitch-agent \
