@@ -19,7 +19,11 @@ FROM ubuntu:14.04
 MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 RUN set -x \
-    && apt-get -y install tftpd-hpa syslinux-common syslinux ipxe
+    && apt-get -y update \
+    && apt-get -y install \
+        tftpd-hpa \
+        syslinux-common \
+        syslinux ipxe \
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh

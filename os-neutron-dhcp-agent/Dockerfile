@@ -20,6 +20,7 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 # install packages
 RUN set -x \
+    && apt-get -y update \
     && apt-get -y install \
         neutron-plugin-ml2 \
         neutron-plugin-openvswitch-agent \
