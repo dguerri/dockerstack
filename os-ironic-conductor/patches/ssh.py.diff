@@ -1,0 +1,20 @@
+--- /usr/lib/python2.7/dist-packages/ironic/drivers/modules/ssh.py.orig	2015-08-23 15:57:03.460000000 +0000
++++ /usr/lib/python2.7/dist-packages/ironic/drivers/modules/ssh.py	2015-08-23 15:58:12.624000000 +0000
+@@ -185,7 +185,7 @@
+             'get_node_macs': ("list -j -i \"{_NodeName_}\" | "
+                 "awk -F'\"' '/\"mac\":/ {print $4}' | "
+                 "sed 's/\\(..\\)\\(..\\)\\(..\\)\\(..\\)\\(..\\)\\(..\\)/"
+-                "\\1:\\2:\\3:\\4:\\5\\6/' | "
++                "\\1:\\2:\\3:\\4:\\5:\\6/' | "
+                 "tr '[:upper:]' '[:lower:]'"),
+             'set_boot_device': ("{_BaseCmd_} set {_NodeName_} "
+                 "--device-bootorder \"{_BootDevice_}\""),
+@@ -360,7 +360,7 @@
+             # node name is always quoted but can contain other information.
+             # vbox returns '"NodeName" {b43c4982-110c-4c29-9325-d5f41b053513}'
+             # so we must use the 'in' comparison here and not '=='
+-            if quoted_node_name in node:
++            if node_name in node:
+                 power_state = states.POWER_ON
+                 break
+         if not power_state:

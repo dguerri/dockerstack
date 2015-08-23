@@ -35,6 +35,14 @@ VOLUME /pxe
 COPY ironic.conf /etc/ironic/ironic.conf
 COPY agent_config.template /etc/ironic/agent_config.template
 
+# workaround for Ironic ssh agent bug when using Parallels (and possibly
+# vmware)
+COPY /patches/ssh.py.diff /root/ssh.py.diff
+RUN set -x \
+    && apt-get -y install patch \
+    && cd / \
+    && patch -p0 < /root/ssh.py.diff
+
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
