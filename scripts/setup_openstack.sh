@@ -1,11 +1,19 @@
 #!/bin/bash
 
+set -uxeo pipefail
+
 CIDR="10.29.29.0/24"
 GATEWAY="10.29.29.1"
 START_IP="10.29.29.20"
 END_IP="10.29.29.200"
 DNS="8.8.8.8"
 
+NODE_CPUS=1
+NODE_RAM=1024
+NODE_DISK=8
+NODE_ARCH=x86_64
+
+# -- [ Neutron
 neutron net-create \
     --shared \
     --router:external \
@@ -18,14 +26,61 @@ neutron subnet-create \
     --gateway "$GATEWAY"\
     --allocation-pool "start=$START_IP,end=$END_IP" \
     --enable-dhcp \
-    --dns-nameserver $DNS \
+    --dns-nameserver "$DNS" \
     external \
-    $CIDR
+    "$CIDR"
 
+# -- [ Glance
 glance image-create \
-    --name='Cirros 0.3.4 - amd64' \
+    --name="Cirros 0.3.4 - x86_64" \
     --is-public=true \
     --container-format=bare \
     --disk-format=qcow2 \
     --progress \
     --location http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+
+glance image-create \
+    --name "IPA deploy kernel - x86_64" \
+    --is-public True \
+    --disk-format aki \
+    --location http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz
+
+kernel_id="$(glance image-list | awk '/IPA deploy kernel - x86_64/ {print $2}')"
+
+glance image-create \
+    --name "IPA deploy initrd - x86_64" \
+    --is-public True \
+    --disk-format ari \
+    --location http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
+
+initrd_id="$(glance image-list | awk '/IPA deploy initrd - x86_64/ {print $2}')"
+
+# -- [ Nova flavor
+nova flavor-create ParallelsVM auto "$NODE_RAM" "$NODE_DISK" "$NODE_CPUS"
+nova flavor-key ParallelsVM set cpu_arch="$NODE_ARCH"
+nova flavor-key ParallelsVM set capabilities:boot_option="local"
+
+# -- [ Ironic
+ironic node-create \
+    --driver agent_ssh \
+    --name "ironic-bm1" \
+    --driver-info deploy_kernel="$kernel_id" \
+    --driver-info deploy_ramdisk="$initrd_id" \
+    --driver-info ssh_username="davide" \
+    --driver-info ssh_key_contents="$(cat ~/.ssh/id_rsa)" \
+    --driver-info ssh_virt_type="parallels" \
+    --driver-info ssh_address="10.211.55.2" \
+    --properties capabilities="boot_option:local" \
+    --properties memory_mb="$NODE_RAM" \
+    --properties cpu_arch="$NODE_ARCH" \
+    --properties local_gb="$NODE_DISK" \
+    --properties cpus="$NODE_CPUS"
+
+ironic node-update "ironic-bm1" add \
+    instance_info/capabilities='{"boot_option": "local"}'
+
+node_uuid="$(ironic node-list | awk '/ironic-bm1/ {print $2}')"
+
+ironic port-create \
+    --node "$node_uuid" \
+    --address 00:1C:42:89:64:34

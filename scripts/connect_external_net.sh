@@ -5,7 +5,7 @@ set -uexo pipefail
 container_name="neutron-dhcp-agent.os-in-a-box"
 host_external_interface="eth1"
 
-docker_pid=$(docker inspect --format '{{ .State.Pid }}' $container_name)
+docker_pid="$(docker inspect --format '{{ .State.Pid }}' $container_name)"
 
 # Add provisioning bridge
 ovs-vsctl br-exists provisioning && ovs-vsctl del-br provisioning
@@ -26,7 +26,7 @@ ip link set dev ext0 up
 ovs-vsctl add-port provisioning ext0
 
 # Move ext1 into the neutron container
-ip link set dev ext1 netns $docker_pid
+ip link set dev ext1 netns "$docker_pid"
 
 # Attach ext1 to br-ex
 docker exec "$container_name" ip link set dev ext1 up
