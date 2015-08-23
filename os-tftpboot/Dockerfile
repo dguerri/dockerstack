@@ -23,7 +23,7 @@ RUN set -x \
     && apt-get -y install \
         tftpd-hpa \
         syslinux-common \
-        syslinux ipxe \
+        syslinux ipxe
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
