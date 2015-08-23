@@ -78,7 +78,7 @@ sed -i "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
 /etc/init.d/openvswitch-switch start
 
 # Create external bridge
-ovs-vsctl br-exists br-ex && del-br br-ex
+ovs-vsctl br-exists br-ex && ovs-vsctl del-br br-ex
 ovs-vsctl add-br br-ex
 ip link set dev br-ex up
 ovs-vsctl add-port br-ex "$EXTERNAL_INTERFACE_NAME"
