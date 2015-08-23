@@ -18,6 +18,8 @@
 
 set -uexo pipefail
 
+IP="10.29.29.1/24"
+
 container_name="neutron-dhcp-agent.os-in-a-box"
 host_external_interface="eth1"
 
@@ -46,3 +48,6 @@ ip link set dev ext1 netns "$docker_pid"
 
 # Attach ext1 to br-ex
 docker exec "$container_name" ip link set dev ext1 up
+
+# Assign the IP to br-ex
+docker exec "$container_name" ip addr add "$IP" dev br-ex
