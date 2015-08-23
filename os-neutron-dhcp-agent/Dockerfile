@@ -32,6 +32,7 @@ RUN set -x \
 COPY dhcp_agent.ini /etc/neutron/dhcp_agent.ini
 COPY ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
 COPY neutron.conf /etc/neutron/neutron.conf
+COPY dnsmasq-ipxe.conf /etc/dnsmasq-ipxe.conf
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
