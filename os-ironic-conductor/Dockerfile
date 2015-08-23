@@ -23,19 +23,13 @@ RUN set -x \
     && apt-get -y update \
     && apt-get -y install \
         ipmitool \
+        qemu-utils \
         ironic-conductor \
         python-mysqldb \
     && apt-get -y clean \
     && rm -f /var/lib/ironic/ironic.db
 
-# set up PXE and iPXE
-RUN mkdir -p /tftpboot && \
-    chown -R ironic /tftpboot
-
-RUN mkdir -p /httpboot && \
-    chown -R ironic /httpboot
-
-VOLUME ["/tftpboot", "/httpboot"]
+VOLUME /pxe
 
 # copy config files
 COPY ironic.conf /etc/ironic/ironic.conf

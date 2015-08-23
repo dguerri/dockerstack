@@ -14,6 +14,7 @@
  `IRONIC_SWIFT_CONTAINER` | | `glance` | N
  `IRONIC_GLANCE_API_URLS` | Comma separated list of Glance servers | `http://127.0.0.1:9292` | N
  `IRONIC_IDENTITY_URI` | | `http://127.0.0.1:35357` | N
+ `IRONIC_AUTH_URI` | | `http://127.0.0.1:5000` | N
  `IRONIC_SERVICE_TENANT_NAME` | | `service` | N
  `IRONIC_SERVICE_USER` | | `ironic` | N
  `IRONIC_SERVICE_PASS` | | None | Y
@@ -42,6 +43,7 @@
         --env IRONIC_RABBITMQ_USER="$IRONIC_RABBITMQ_USER" \
         --env IRONIC_RABBITMQ_PASS="$IRONIC_RABBITMQ_PASS" \
         --env IRONIC_IDENTITY_URI="$IDENTITY_URI" \
+        --env IRONIC_AUTH_URI="$AUTH_URI" \
         --env IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env IRONIC_SERVICE_USER="$IRONIC_SERVICE_USER" \
         --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \

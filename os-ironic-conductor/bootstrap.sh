@@ -32,6 +32,7 @@ IRONIC_CLEAN_NODE="${IRONIC_CLEAN_NODE:-false}"
 IRONIC_SWIFT_CONTAINER="${IRONIC_SWIFT_CONTAINER:-glance}"
 IRONIC_GLANCE_API_URLS="${IRONIC_GLANCE_API_URLS:-http://127.0.0.1:9292}"
 IRONIC_IDENTITY_URI="${IRONIC_IDENTITY_URI:-http://127.0.0.1:35357}"
+IRONIC_AUTH_URI="${IRONIC_AUTH_URI:-http://127.0.0.1:5000}"
 IRONIC_SERVICE_TENANT_NAME="${IRONIC_SERVICE_TENANT_NAME:-service}"
 IRONIC_SERVICE_USER="${IRONIC_SERVICE_USER:-ironic}"
 #IRONIC_SERVICE_PASS
@@ -75,6 +76,7 @@ sed -i "s#%IRONIC_SWIFT_CONTAINER%#${IRONIC_SWIFT_CONTAINER}#" \
 sed -i "s#%IRONIC_GLANCE_API_URLS%#${IRONIC_GLANCE_API_URLS}#" \
     "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_IDENTITY_URI%#${IRONIC_IDENTITY_URI}#" "$IRONIC_CONFIG_FILE"
+sed -i "s#%IRONIC_AUTH_URI%#${IRONIC_AUTH_URI}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_SERVICE_TENANT_NAME%#${IRONIC_SERVICE_TENANT_NAME}#" \
     "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_SERVICE_USER%#${IRONIC_SERVICE_USER}#" "$IRONIC_CONFIG_FILE"
@@ -92,10 +94,22 @@ sed -i "s#%IRONIC_IPXE_HTTP_URL%#${IRONIC_IPXE_HTTP_URL}#" \
     "$IRONIC_CONFIG_FILE"
 sed -i "s#%PXE_BOOTFILE_NAME%#${PXE_BOOTFILE_NAME}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%PXE_CONFIG_TEMPLATE%#${PXE_CONFIG_TEMPLATE}#" "$IRONIC_CONFIG_FILE"
+sed -i "s#%IRONIC_USE_IPXE%#${IRONIC_USE_IPXE}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_IPXE_HTTP_URL%#${IRONIC_IPXE_HTTP_URL}#" "$AGENT_TEMPLATE"
 
 # Migrate ironic database
 sudo -u ironic ironic-dbsync -v upgrade
+
+# Create missing directories, if needed
+if [ ! -d  /pxe/tftpboot ]; then
+    mkdir -p /pxe/tftpboot
+fi
+chown -R ironic /pxe/tftpboot
+
+if [ ! -d  /pxe/httpboot ]; then
+    mkdir -p /pxe/httpboot
+fi
+chown -R ironic /pxe/httpboot
 
 # Start the service
 ironic-conductor

@@ -20,4 +20,4 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 COPY httpd.conf /usr/local/apache2/conf/httpd.conf
 
-VOLUME /httpboot
+VOLUME /pxe

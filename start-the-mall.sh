@@ -58,8 +58,7 @@ GLANCE_SWIFT_CONTAINER="glance"
 IRONIC_SWIFT_TEMPURL_KEY="TohNahNgab9ohSha4cheBail7za8Ohlei4ohb2oh"
 SWIFT_DEVS_DATA_CONTAINER_NAME=swift-devs-data
 SWIFT_RINGS_DATA_CONTAINER_NAME=swift-rings-data
-TFTPBOOT_DATA_CONTAINER_NAME=tftpboot-data
-HTTPBOOT_DATA_CONTAINER_NAME=httpboot-data
+PXE_BOOT_DATA_CONTAINER_NAME=pxe-boot-data
 
 SERVICE_TENANT_NAME=service
 KEYSTONE_SERVICE_TOKEN=asohzee4cei2ahd6aig6caew6uapheewaezoGei7
@@ -439,10 +438,10 @@ docker run -d \
 
 wait_host "$NEUTRON_SERVER_HOSTNAME" 9696
 
-# ----[ TFTPboot data container
+# ----[ (i)PXE data container
 docker create \
-    --volume /tftpboot \
-    --name "$TFTPBOOT_DATA_CONTAINER_NAME" \
+    --volume /pxe \
+    --name "$PXE_BOOT_DATA_CONTAINER_NAME" \
     os-base-image /bin/true
 
 # ----[ TFTPd server(PXE)
@@ -451,17 +450,11 @@ docker run -d \
     --publish 0.0.0.0:69:69/udp \
     --name "$PXE_TFTPD_HOSTNAME" \
     --hostname "$PXE_TFTPD_HOSTNAME" \
-    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME" \
+    --volumes-from "$PXE_BOOT_DATA_CONTAINER_NAME" \
     os-tftpboot
 
 wait_host "$PXE_TFTPD_HOSTNAME"
 tftpboot_server_ip=$(get_container_ip $PXE_TFTPD_HOSTNAME)
-
-# ----[ HTTPboot data container
-docker create \
-    --volume /httpboot \
-    --name "$HTTPBOOT_DATA_CONTAINER_NAME" \
-    os-base-image /bin/true
 
 # ----[ Apache server (iPXE)
 docker run -d \
@@ -469,7 +462,7 @@ docker run -d \
     --publish 0.0.0.0:8090:80/tcp \
     --name "$IPXE_HTTPD_HOSTNAME" \
     --hostname "$IPXE_HTTPD_HOSTNAME" \
-    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME":ro \
+    --volumes-from "$PXE_BOOT_DATA_CONTAINER_NAME":ro \
     os-httpboot
 
 wait_host "$IPXE_HTTPD_HOSTNAME" 80
@@ -480,8 +473,7 @@ docker run -d \
     --restart=always \
     --name "$IRONIC_CONDUCTOR_HOSTNAME" \
     --hostname "$IRONIC_CONDUCTOR_HOSTNAME" \
-    --volumes-from "$TFTPBOOT_DATA_CONTAINER_NAME" \
-    --volumes-from "$HTTPBOOT_DATA_CONTAINER_NAME" \
+    --volumes-from "$PXE_BOOT_DATA_CONTAINER_NAME" \
     --env IRONIC_DB_HOST="$MYSQL_HOSTNAME" \
     --env IRONIC_DB_USER="$IRONIC_DB_USER" \
     --env IRONIC_DB_PASS="$IRONIC_DB_PASS" \
@@ -489,6 +481,7 @@ docker run -d \
     --env IRONIC_RABBITMQ_USER="$IRONIC_RABBITMQ_USER" \
     --env IRONIC_RABBITMQ_PASS="$IRONIC_RABBITMQ_PASS" \
     --env IRONIC_IDENTITY_URI="$IDENTITY_URI" \
+    --env IRONIC_AUTH_URI="$AUTH_URI" \
     --env IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     --env IRONIC_SERVICE_USER="$IRONIC_SERVICE_USER" \
     --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
@@ -639,6 +632,10 @@ docker run -d \
     --env NOVA_IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
     --env NOVA_IRONIC_AUTH_URI="$AUTH_URI" \
     --env NOVA_IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+    --env NOVA_NEUTRON_SERVICE_USER="$NEUTRON_SERVICE_USER" \
+    --env NOVA_NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
+    --env NOVA_NEUTRON_AUTH_URI="$AUTH_URI" \
+    --env NOVA_NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
     os-nova-compute
 
 # ---- [ Swift Data Containers

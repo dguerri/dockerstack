@@ -29,9 +29,9 @@ RUN set -x \
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
-VOLUME /tftpboot
+VOLUME /pxe
 
 EXPOSE 69/udp
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
-CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/tftpboot/map-file", "-L", "-u", "tftp", "--secure", "/tftpboot"]
+CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/tftpboot/map-file", "-L", "-u", "tftp", "--secure", "/pxe/tftpboot"]
