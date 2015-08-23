@@ -35,8 +35,8 @@ NEUTRON_ENABLE_IPXE="${NEUTRON_ENABLE_IPXE:-false}"
 EXTERNAL_INTERFACE_NAME="${EXTERNAL_INTERFACE_NAME:-ext1}"
 
 MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
-MY_SUBNET="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $4}')"
-MY_GW=$(ip route show | awk '/default/ {print $3}')
+#MY_SUBNET="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $4}')"
+#MY_GW=$(ip route show | awk '/default/ {print $3}')
 TUNNEL_LOCAL_IP="$MY_IP"
 NEUTRON_CONFIG_FILE="/etc/neutron/neutron.conf"
 DHCP_AGENT_CONFIG_FILE="/etc/neutron/dhcp_agent.ini"
