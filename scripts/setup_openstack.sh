@@ -61,6 +61,8 @@ neutron subnet-create \
 download_if_not_exist \
     http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 download_if_not_exist \
+    https://cloud-images.ubuntu.com/vivid/current/vivid-server-cloudimg-amd64-disk1.img
+download_if_not_exist \
     http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz
 download_if_not_exist \
     http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
@@ -72,6 +74,14 @@ glance image-create \
     --disk-format=qcow2 \
     --progress \
     --file "$SCRIPT_DIR/cirros-0.3.4-x86_64-disk.img"
+
+glance image-create \
+    --name="Ubuntu Vivid - x86_64" \
+    --is-public=true \
+    --container-format=bare \
+    --disk-format=qcow2 \
+    --progress \
+    --file "$SCRIPT_DIR/vivid-server-cloudimg-amd64-disk1.img"
 
 glance image-create \
     --name "IPA deploy kernel - x86_64" \
