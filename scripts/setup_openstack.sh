@@ -18,6 +18,8 @@
 
 set -uexo pipefail
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 CIDR="10.29.29.0/24"
 GATEWAY="10.29.29.1"
 START_IP="10.29.29.20"
@@ -28,6 +30,15 @@ NODE_CPUS=1
 NODE_RAM=1024
 NODE_DISK=8
 NODE_ARCH=x86_64
+
+download_if_not_exist() {
+    local url="$1"
+    local filename=$(basename $1)
+
+    if [ ! -f "$SCRIPT_DIR/$filename" ]; then
+        curl -o "$SCRIPT_DIR/$filename" "$url"
+    fi
+}
 
 # -- [ Neutron
 neutron net-create \
@@ -47,19 +58,26 @@ neutron subnet-create \
     "$CIDR"
 
 # -- [ Glance
+download_if_not_exist \
+    http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+download_if_not_exist \
+    http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz
+download_if_not_exist \
+    http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
+
 glance image-create \
     --name="Cirros 0.3.4 - x86_64" \
     --is-public=true \
     --container-format=bare \
     --disk-format=qcow2 \
     --progress \
-    --location http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+    --file "$SCRIPT_DIR/cirros-0.3.4-x86_64-disk.img"
 
 glance image-create \
     --name "IPA deploy kernel - x86_64" \
     --is-public True \
     --disk-format aki \
-    --location http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz
+    --file "$SCRIPT_DIR/coreos_production_pxe.vmlinuz"
 
 kernel_id="$(glance image-list | awk '/IPA deploy kernel - x86_64/ {print $2}')"
 
@@ -67,7 +85,7 @@ glance image-create \
     --name "IPA deploy initrd - x86_64" \
     --is-public True \
     --disk-format ari \
-    --location http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
+    --file "$SCRIPT_DIR/coreos_production_pxe_image-oem.cpio.gz"
 
 initrd_id="$(glance image-list | awk '/IPA deploy initrd - x86_64/ {print $2}')"
 
