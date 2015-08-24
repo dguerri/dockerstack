@@ -34,4 +34,4 @@ VOLUME /pxe
 EXPOSE 69/udp
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
-CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/pxe/tftpboot/map-file", "-L", "-u", "tftp", "--secure", "/pxe/tftpboot"]
+CMD ["-v", "-v", "-v", "-v", "-v", "--map-file", "/pxe/tftpboot/map-file", "-L", "/pxe/tftpboot"]

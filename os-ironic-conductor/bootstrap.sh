@@ -111,5 +111,9 @@ if [ ! -d  /pxe/httpboot ]; then
 fi
 chown -R ironic /pxe/httpboot
 
+# Temporary. This should be copied over automatically...
+cp /usr/lib/python2.7/dist-packages/ironic/drivers/modules/boot.ipxe \
+    /pxe/httpboot/
+
 # Start the service
 ironic-conductor

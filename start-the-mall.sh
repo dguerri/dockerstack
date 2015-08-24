@@ -400,6 +400,9 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
                 http://$IRONIC_API_HOSTNAME:6385/ \
             --region regionOne
 
+service_tenant_id=$(docker exec -i "$KEYSTONE_HOSTNAME" \
+    keystone tenant-list | awk '/ service / { print $2 }')
+
 # ----[ RabbitMQ
 docker run -d \
     --restart=always \
@@ -488,6 +491,7 @@ wait_host "$IPXE_HTTPD_HOSTNAME" 80
 httpboot_server_ip=$(get_container_ip $IPXE_HTTPD_HOSTNAME)
 
 # ----[ Ironic Conductor
+# Enable temporary url in swift
 docker run -d \
     --restart=always \
     --name "$IRONIC_CONDUCTOR_HOSTNAME" \
@@ -506,14 +510,14 @@ docker run -d \
     --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
     --env IRONIC_SWIFT_TEMP_URL_KEY="$IRONIC_SWIFT_TEMP_URL_KEY" \
     --env IRONIC_SWIFT_ENDPOINT_URL="http://$SWIFT_PROXY_HOSTNAME:8080" \
-    --env IRONIC_SWIFT_ACCOUNT="$SERVICE_TENANT_NAME:$IRONIC_SERVICE_USER" \
+    --env IRONIC_SWIFT_ACCOUNT="AUTH_$service_tenant_id" \
     --env IRONIC_SWIFT_CONTAINER="glance" \
     --env IRONIC_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
     --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
     --env IRONIC_CLEAN_NODE="false" \
     --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
-    --env IRONIC_TFTP_SERVER="$tftpboot_server_ip" \
-    --env IRONIC_IPXE_HTTP_URL="http://$httpboot_server_ip:8090" \
+    --env IRONIC_TFTP_SERVER="10.29.29.1" \
+    --env IRONIC_IPXE_HTTP_URL="http://10.29.29.1:8090" \
     --env IRONIC_USE_IPXE="true" \
     os-ironic-conductor
 
@@ -535,7 +539,7 @@ docker run -d \
     --env IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
     --env IRONIC_SWIFT_TEMP_URL_KEY="$IRONIC_SWIFT_TEMP_URL_KEY" \
     --env IRONIC_SWIFT_ENDPOINT_URL="http://$SWIFT_PROXY_HOSTNAME:8080" \
-    --env IRONIC_SWIFT_ACCOUNT="$SERVICE_TENANT_NAME:$IRONIC_SERVICE_USER" \
+    --env IRONIC_SWIFT_ACCOUNT="AUTH_$service_tenant_id" \
     --env IRONIC_SWIFT_CONTAINER="glance" \
     --env IRONIC_GLANCE_API_URLS="http://$GLANCE_API_HOSTNAME:9292" \
     --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
@@ -735,6 +739,13 @@ docker run -d \
     os-swift-proxy
 
 wait_host "$SWIFT_PROXY_HOSTNAME" 8080
+
+# Enable tempurls in swift
+docker exec -i "$SWIFT_PROXY_HOSTNAME" \
+    swift --os-username="$SERVICE_TENANT_NAME:$SWIFT_SERVICE_USER" \
+          --os-password="$SWIFT_SERVICE_PASS" \
+          --os-auth-url="$AUTH_URI" \
+          post -m temp-url-key:"$IRONIC_SWIFT_TEMP_URL_KEY"
 
 # ----[ Glance Registry
 docker run -d \

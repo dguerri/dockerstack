@@ -15,7 +15,9 @@ cp /usr/lib/syslinux/pxelinux.0 /pxe/tftpboot
 cp /usr/lib/syslinux/chain.c32 /pxe/tftpboot
 cp /usr/lib/ipxe/undionly.kpxe /pxe/tftpboot
 
-echo 'r ^([^/]) /pxe/tftpboot/\1' > /pxe/tftpboot/map-file
-echo 'r ^(/pxe/tftpboot/) /pxe/tftpboot/\2' >> /pxe/tftpboot/map-file
+echo 're ^(/pxe/tftpboot/) /pxe/tftpboot/\2' > /pxe/tftpboot/map-file
+echo 're ^/pxe/tftpboot/ /pxe/tftpboot/' >> /pxe/tftpboot/map-file
+echo 're ^(^/) /pxe/tftpboot/\1' >> /pxe/tftpboot/map-file
+echo 're ^([^/]) /pxe/tftpboot/\1' >> /pxe/tftpboot/map-file
 
 in.tftpd $@
