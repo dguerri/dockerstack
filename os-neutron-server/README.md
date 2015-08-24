@@ -19,6 +19,9 @@
  `NEUTRON_RABBITMQ_HOST` | | `localhost` | N
  `NEUTRON_RABBITMQ_USER` | | `guest` | N
  `NEUTRON_RABBITMQ_PASS` | | `guest` | N
+ `NEUTRON_EXTERNAL_NETWORKS` | | `external` | N
+ `NEUTRON_BRIDGE_MAPPINGS` | | `external:br-ex` | N
+
 
 ## Examples
 
