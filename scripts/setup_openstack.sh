@@ -36,7 +36,7 @@ download_if_not_exist() {
     local filename=$(basename $1)
 
     if [ ! -f "$SCRIPT_DIR/$filename" ]; then
-        curl -o "$SCRIPT_DIR/$filename" "$url"
+        curl -s -o "$SCRIPT_DIR/$filename" "$url"
     fi
 }
 
@@ -77,6 +77,7 @@ glance image-create \
     --name "IPA deploy kernel - x86_64" \
     --is-public True \
     --disk-format aki \
+    --progress \
     --file "$SCRIPT_DIR/coreos_production_pxe.vmlinuz"
 
 kernel_id="$(glance image-list | awk '/IPA deploy kernel - x86_64/ {print $2}')"
@@ -85,6 +86,7 @@ glance image-create \
     --name "IPA deploy initrd - x86_64" \
     --is-public True \
     --disk-format ari \
+    --progress \
     --file "$SCRIPT_DIR/coreos_production_pxe_image-oem.cpio.gz"
 
 initrd_id="$(glance image-list | awk '/IPA deploy initrd - x86_64/ {print $2}')"
