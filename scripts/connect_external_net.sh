@@ -49,5 +49,6 @@ ip link set dev ext1 netns "$docker_pid"
 # Attach ext1 to br-ex
 docker exec "$container_name" ip link set dev ext1 up
 
-# Assign the IP to br-ex
-docker exec "$container_name" ip addr add "$IP" dev br-ex
+# Assign the IP
+#docker exec "$container_name" ip addr add "$IP" dev br-ex
+ip addr add "$IP" dev provisioning
