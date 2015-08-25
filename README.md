@@ -1,3 +1,7 @@
+## A picture is worth a thousand words
+
+![A picture is worth a thousand words](doc/demo.png)
+
 ## Clean
 
     # Clean version 1.0 with 5 parallel processes
@@ -10,7 +14,7 @@
 
 ### Example output
 
-    (davide:marley)-[0]-(~/D/openstack-docker) # make test 
+    (davide:marley)-[0]-(~/D/openstack-docker) # make test
     ☝️  os-mysql:latest - Not implemented
     ☝️  os-httpboot:latest - Not implemented
     ☝️  os-tftpboot:latest - Not implemented
@@ -68,7 +72,7 @@
 
 ## Run
 
-    (davide:marley)-[0]-(~/D/openstack-docker) # ./start-the-mall.sh 
+    (davide:marley)-[0]-(~/D/openstack-docker) # ./start-the-mall.sh
     + set -e
     + set -u
     + set -o pipefail
@@ -86,7 +90,7 @@ _a lot of stuff_
     + set -e
     + '[' 0 -eq 0 ']'
     + return 0
-    (davide:marley)-[0]-(~/D/openstack-docker) # 
+    (davide:marley)-[0]-(~/D/openstack-docker) #
 
 
 Then run `scripts/connect_external_net.sh` to attach eth1 (an external physical interface) to the provisioning network.
@@ -94,27 +98,27 @@ This also creates a virtual switch and a couple of veth interfaces. Il also "pus
 
 This is the final (virtual) networking configuration
 
-    ┌────────────────────────────────────────────────────────────┐      ┌─┐             
+    ┌────────────────────────────────────────────────────────────┐      ┌─┐
     │┌──────────────────────────────────────────────────────────┐│      │ │   ┌────────┐
     ││                         docker0                          ││      │p│───│BM node │
     │└──────────────────────────────────────────────────────────┘│      │h│   └────────┘
-    │             │                           │                  │      │y│             
-    │             │                           │                  │      │s│             
-    │┌─────────────────────────┐              │                  │      │i│             
+    │             │                           │                  │      │y│
+    │             │                           │                  │      │s│
+    │┌─────────────────────────┐              │                  │      │i│
     ││   Neutron DHCP Agent    │    ┌──────────────────┐         │      │c│   ┌────────┐
     ││        Container        │    │ ┌────────────────┴─┐       │      │a│───│BM node │
     ││                         │    │ │ ┌────────────────┴─┐     │      │l│   └────────┘
-    ││ ┌──────────────────────┐│    │ │ │ ┌────────────────┴─┐   │      │-│             
-    ││ │        br-ex  ┌────┐ ││    │ │ │ │ Other containers │   │      │n│             
-    ││ └───────────────┤ext1├─┘│    └─┤ │ │                  │   │      │e│             
-    ││                 └────┘  │      └─┤ │                  │   │      │t│             
-    ││                    │    │        └─┤                  │   │      │w│             
-    │└────────────────────┼────┘          └──────────────────┘   │      │o│             
-    │                     │                                      │      │r│             
+    ││ ┌──────────────────────┐│    │ │ │ ┌────────────────┴─┐   │      │-│
+    ││ │        br-ex  ┌────┐ ││    │ │ │ │ Other containers │   │      │n│
+    ││ └───────────────┤ext1├─┘│    └─┤ │ │                  │   │      │e│
+    ││                 └────┘  │      └─┤ │                  │   │      │t│
+    ││                    │    │        └─┤                  │   │      │w│
+    │└────────────────────┼────┘          └──────────────────┘   │      │o│
+    │                     │                                      │      │r│
     │                  ┌────┐        ┌───────────────┐         ┌─┴──┐   │k│   ┌────────┐
     │                  │ext0│────────│ provisioning  │─────────│eth1│───│ │───│BM node │
     │        ┌────┐    └────┘        └───────────────┘         └─┬──┘   │ │   └────────┘
-    └────────┤eth0├──────────────────────────────────────────────┘      └─┘             
-             └────┘                                                                     
+    └────────┤eth0├──────────────────────────────────────────────┘      └─┘
+             └────┘
 
 Lastly run `scripts/setup_openstack.sh` to create the initial demo setup for BM provisioning.
