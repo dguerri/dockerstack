@@ -23,6 +23,10 @@ set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+DOCKER_SERVER_HOSTNAME="docker-server.local"
+# This is used for TFTP and iPXE HTTP
+DOCKER_SERVER_EXTERNAL_IP="10.29.29.1"
+
 AUTODNS_HOSTNAME=autodns.os-in-a-box
 MYSQL_HOSTNAME=mysql.os-in-a-box
 KEYSTONE_HOSTNAME=keystone.os-in-a-box
@@ -130,6 +134,10 @@ docker run -d \
     --name "$AUTODNS_HOSTNAME" \
     --hostname "$AUTODNS_HOSTNAME" \
     rehabstudio/autodns
+
+docker exec "$AUTODNS_HOSTNAME" \
+    bash -c \
+        "echo $DOCKER_SERVER_EXTERNAL_IP $DOCKER_SERVER_HOSTNAME >> /etc/hosts"
 
 # ----[ MySQL
 docker run -d \
@@ -242,7 +250,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             endpoint-create \
                 --service keystone \
-                --publicurl "http://${KEYSTONE_HOSTNAME}:5000/v2.0" \
+                --publicurl "http://${DOCKER_SERVER_HOSTNAME}:5000/v2.0" \
                 --internalurl "http://${KEYSTONE_HOSTNAME}:5000/v2.0" \
                 --adminurl "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
                 --region regionOne
@@ -271,7 +279,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             endpoint-create \
             --service glance \
-            --publicurl "http://${GLANCE_API_HOSTNAME}:9292/" \
+            --publicurl "http://${DOCKER_SERVER_HOSTNAME}:9292/" \
             --internalurl "http://${GLANCE_API_HOSTNAME}:9292/" \
             --adminurl "http://${GLANCE_API_HOSTNAME}:9292/" \
             --region regionOne
@@ -301,7 +309,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
             endpoint-create \
             --service swift \
             --publicurl \
-                "http://${SWIFT_PROXY_HOSTNAME}:8080/v1/AUTH_%(tenant_id)s" \
+                "http://${DOCKER_SERVER_HOSTNAME}:8080/v1/AUTH_%(tenant_id)s" \
             --internalurl \
                 "http://${SWIFT_PROXY_HOSTNAME}:8080/v1/AUTH_%(tenant_id)s" \
             --adminurl "http://${SWIFT_PROXY_HOSTNAME}:8080/" \
@@ -331,7 +339,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
         --os-endpoint "http://${KEYSTONE_HOSTNAME}:35357/v2.0" \
             endpoint-create \
             --service neutron \
-            --publicurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
+            --publicurl http://${DOCKER_SERVER_HOSTNAME}:9696/ \
             --internalurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
             --adminurl http://${NEUTRON_SERVER_HOSTNAME}:9696/ \
             --region regionOne
@@ -361,7 +369,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
             endpoint-create \
             --service nova \
             --publicurl \
-                http://${NOVA_API_HOSTNAME}:8774/v2/%\(tenant_id\)s \
+                http://${DOCKER_SERVER_HOSTNAME}:8774/v2/%\(tenant_id\)s \
             --internalurl \
                 http://${NOVA_API_HOSTNAME}:8774/v2/%\(tenant_id\)s \
             --adminurl \
@@ -393,7 +401,7 @@ docker exec -i "$KEYSTONE_HOSTNAME" \
             endpoint-create \
             --service ironic \
             --publicurl \
-                http://$IRONIC_API_HOSTNAME:6385/ \
+                http://$DOCKER_SERVER_HOSTNAME:6385/ \
             --internalurl \
                 http://$IRONIC_API_HOSTNAME:6385/ \
             --adminurl \
@@ -518,8 +526,8 @@ docker run -d \
     --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
     --env IRONIC_CLEAN_NODE="false" \
     --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
-    --env IRONIC_TFTP_SERVER="10.29.29.1" \
-    --env IRONIC_IPXE_HTTP_URL="http://10.29.29.1:8090" \
+    --env IRONIC_TFTP_SERVER="$DOCKER_SERVER_EXTERNAL_IP" \
+    --env IRONIC_IPXE_HTTP_URL="http://$DOCKER_SERVER_EXTERNAL_IP:8090" \
     --env IRONIC_USE_IPXE="true" \
     os-ironic-conductor
 
@@ -594,6 +602,7 @@ docker run -d \
 # ----[ Nova API
 docker run -d \
     --restart=always \
+    --publish 0.0.0.0:8774:8774/tcp \
     --privileged=true \
     --volume=/lib/modules:/lib/modules:ro \
     --name "$NOVA_API_HOSTNAME" \
@@ -731,6 +740,7 @@ object_ip=$(get_container_ip $SWIFT_OBJECT_HOSTNAME)
 # ----[ Swift Proxy
 docker run -d \
     --restart=always \
+    --publish 0.0.0.0:8080:8080/tcp \
     --name "$SWIFT_PROXY_HOSTNAME" \
     --hostname "$SWIFT_PROXY_HOSTNAME" \
     --volumes-from "$SWIFT_RINGS_DATA_CONTAINER_NAME" \
@@ -760,7 +770,6 @@ docker exec -i "$SWIFT_PROXY_HOSTNAME" \
 # ----[ Glance Registry
 docker run -d \
     --restart=always \
-    --publish 0.0.0.0:9191:9191/tcp \
     --env GLANCE_DB_HOST="$MYSQL_HOSTNAME" \
     --env GLANCE_DB_USER="$GLANCE_DB_USER" \
     --env GLANCE_DB_PASS="$GLANCE_DB_PASS" \
