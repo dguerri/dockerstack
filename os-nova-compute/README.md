@@ -24,6 +24,7 @@
  `NOVA_IRONIC_SERVICE_PASS` | | | N
  `NOVA_IRONIC_AUTH_URI` | | | N
  `NOVA_IRONIC_SERVICE_TENANT_NAME` | | | N
+ `NOVA_NOTIFY_ON_STATE_CHANGE` | Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `None` | N
 
 ## Examples
 
@@ -49,4 +50,5 @@
         --env NOVA_IRONIC_SERVICE_PASS="$IRONIC_SERVICE_PASS" \
         --env NOVA_IRONIC_AUTH_URI="$AUTH_URI" \
         --env NOVA_IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+        --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
         os-nova-compute
