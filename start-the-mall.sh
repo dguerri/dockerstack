@@ -26,7 +26,7 @@ DOCKER_SERVER_HOSTNAME="docker-server.local"
 # This is used for TFTP and iPXE HTTP
 DOCKER_SERVER_EXTERNAL_IP="10.29.29.1"
 # Enable nova notifications. Valid values: None, vm_state, vm_and_task_state
-NOVA_NOTIFY="None"
+NOVA_NOTIFY="vm_state"
 
 # -------------------------------------
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
