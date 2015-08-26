@@ -21,11 +21,15 @@ set -e
 set -u
 set -o pipefail
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+# Docker host hostname
 DOCKER_SERVER_HOSTNAME="docker-server.local"
 # This is used for TFTP and iPXE HTTP
 DOCKER_SERVER_EXTERNAL_IP="10.29.29.1"
+# Enable nova notifications. Valid values: None, vm_state, vm_and_task_state
+NOVA_NOTIFY="None"
+
+# -------------------------------------
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 AUTODNS_HOSTNAME=autodns.os-in-a-box
 MYSQL_HOSTNAME=mysql.os-in-a-box
@@ -597,7 +601,7 @@ docker run -d \
     --env NOVA_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
     --env NOVA_IRONIC_API_ENDPOINT="http://$IRONIC_API_HOSTNAME:6385/v1" \
     --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
-    --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+    --env NOVA_NOTIFY_ON_STATE_CHANGE="$NOVA_NOTIFY" \
     os-nova-conductor
 
 # ----[ Nova API
@@ -630,7 +634,7 @@ docker run -d \
     --env NOVA_NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
     --env NOVA_NEUTRON_AUTH_URI="$AUTH_URI" \
     --env NOVA_NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
-    --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+    --env NOVA_NOTIFY_ON_STATE_CHANGE="$NOVA_NOTIFY" \
     os-nova-api
 
 wait_host "$NOVA_API_HOSTNAME" 8774
@@ -652,7 +656,7 @@ docker run -d \
     --env NOVA_SERVICE_PASS="$NOVA_SERVICE_PASS" \
     --env NOVA_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
     --env NOVA_USE_IRONIC="true" \
-    --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+    --env NOVA_NOTIFY_ON_STATE_CHANGE="$NOVA_NOTIFY" \
     os-nova-scheduler
 
 # ----[ Nova Compute
@@ -682,7 +686,7 @@ docker run -d \
     --env NOVA_NEUTRON_SERVICE_PASS="$NEUTRON_SERVICE_PASS" \
     --env NOVA_NEUTRON_AUTH_URI="$AUTH_URI" \
     --env NOVA_NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
-    --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+    --env NOVA_NOTIFY_ON_STATE_CHANGE="$NOVA_NOTIFY" \
     os-nova-compute
 
 # ---- [ Swift Data Containers

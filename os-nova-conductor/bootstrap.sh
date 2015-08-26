@@ -44,6 +44,13 @@ DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
 
+if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
+    # Turn off nova notification
+    NOTIFICATION_DRIVER="noop"
+else
+    NOTIFICATION_DRIVER="messagingv2"
+fi
+
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" "$CONFIG_FILE"
@@ -58,6 +65,7 @@ sed -i "s#%NOVA_SERVICE_PASS%#${NOVA_SERVICE_PASS}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_MEMCACHED_SERVERS%#${NOVA_MEMCACHED_SERVERS}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_NOTIFY_ON_STATE_CHANGE%#${NOVA_NOTIFY_ON_STATE_CHANGE}#" \
     "$CONFIG_FILE"
+sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$CONFIG_FILE"
 
 sed -i "s#%NOVA_GLANCE_API_URLS%#${NOVA_GLANCE_API_URLS}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_NEUTRON_SERVER_URL%#${NOVA_NEUTRON_SERVER_URL}#" \

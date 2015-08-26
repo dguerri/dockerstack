@@ -61,6 +61,12 @@ else
 
     /etc/init.d/libvirt-bin start
 fi
+if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
+    # Turn off nova notification
+    NOTIFICATION_DRIVER="noop"
+else
+    NOTIFICATION_DRIVER="messagingv2"
+fi
 
 # Configure the service with environment variables defined
 sed -i "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" "$NOVA_CONFIG_FILE"
@@ -76,6 +82,7 @@ sed -i "s#%NOVA_GLANCE_API_URLS%#${NOVA_GLANCE_API_URLS}#" "$NOVA_CONFIG_FILE"
 sed -i "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_CONFIG_FILE"
 sed -i "s#%NOVA_NOTIFY_ON_STATE_CHANGE%#${NOVA_NOTIFY_ON_STATE_CHANGE}#" \
     "$NOVA_CONFIG_FILE"
+sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$NOVA_CONFIG_FILE"
 
 sed -i "s#%NOVA_NEUTRON_SERVER_URL%#${NOVA_NEUTRON_SERVER_URL}#" \
     "$NOVA_CONFIG_FILE"

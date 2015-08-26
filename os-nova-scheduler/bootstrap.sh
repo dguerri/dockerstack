@@ -58,6 +58,13 @@ else
     /etc/init.d/libvirt-bin start
 fi
 
+if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
+    # Turn off nova notification
+    NOTIFICATION_DRIVER="noop"
+else
+    NOTIFICATION_DRIVER="messagingv2"
+fi
+
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" "$CONFIG_FILE"
@@ -80,6 +87,7 @@ sed -i \
 sed -i "s#%RAM_ALLOCATION_RATIO%#${RAM_ALLOCATION_RATIO}#" "$CONFIG_FILE"
 sed -i "s#%NOVA_NOTIFY_ON_STATE_CHANGE%#${NOVA_NOTIFY_ON_STATE_CHANGE}#" \
     "$CONFIG_FILE"
+sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$CONFIG_FILE"
 
 # Start the service
 nova-scheduler
