@@ -41,11 +41,21 @@ IRONIC_RABBITMQ_HOST="${IRONIC_RABBITMQ_HOST:-localhost}"
 IRONIC_RABBITMQ_USER="${IRONIC_RABBITMQ_USER:-ironic}"
 #IRONIC_RABBITMQ_PASS
 IRONIC_MEMCACHED_SERVERS="${IRONIC_MEMCACHED_SERVERS:-}"
+IRONIC_NOTIFICATIONS="${IRONIC_NOTIFICATIONS:-false}"
 
 IRONIC_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
 "mysql://${IRONIC_DB_USER}:${IRONIC_DB_PASS}@${IRONIC_DB_HOST}/ironic"
 CONFIG_FILE="/etc/ironic/ironic.conf"
+
+if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
+     "$IRONIC_NOTIFICATIONS" == "True" ]; then
+     NOTIFICATION_DRIVER="messagingv2"
+else
+    # Turn off notifications
+    NOTIFICATION_DRIVER="noop"
+fi
+
 
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
@@ -70,6 +80,7 @@ sed -i "s#%IRONIC_NEUTRON_SERVER_URL%#${IRONIC_NEUTRON_SERVER_URL}#" \
 sed -i "s#%IRONIC_RABBITMQ_HOST%#${IRONIC_RABBITMQ_HOST}#" "$CONFIG_FILE"
 sed -i "s#%IRONIC_RABBITMQ_USER%#${IRONIC_RABBITMQ_USER}#" "$CONFIG_FILE"
 sed -i "s#%IRONIC_RABBITMQ_PASS%#${IRONIC_RABBITMQ_PASS}#" "$CONFIG_FILE"
+sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$CONFIG_FILE"
 
 # Migrate ironic database
 sudo -u ironic ironic-dbsync -v upgrade

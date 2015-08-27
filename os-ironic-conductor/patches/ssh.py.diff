@@ -1,5 +1,14 @@
 --- /usr/lib/python2.7/dist-packages/ironic/drivers/modules/ssh.py.orig	2015-08-23 15:57:03.460000000 +0000
 +++ /usr/lib/python2.7/dist-packages/ironic/drivers/modules/ssh.py	2015-08-23 15:58:12.624000000 +0000
+@@ -176,7 +176,7 @@
+         return virsh_cmds
+     elif virt_type == 'parallels':
+         return {
+-            'base_cmd': 'LC_ALL=C /usr/bin/prlctl',
++            'base_cmd': 'LC_ALL=C /usr/local/bin/prlctl',
+             'start_cmd': 'start {_NodeName_}',
+             'stop_cmd': 'stop {_NodeName_} --kill',
+             'reboot_cmd': 'reset {_NodeName_}',
 @@ -185,7 +185,7 @@
              'get_node_macs': ("list -j -i \"{_NodeName_}\" | "
                  "awk -F'\"' '/\"mac\":/ {print $4}' | "

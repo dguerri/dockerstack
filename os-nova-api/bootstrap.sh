@@ -46,18 +46,19 @@ NOVA_NEUTRON_AUTH_URI="${NOVA_NEUTRON_AUTH_URI:-http://127.0.0.1:5000/v2.0}"
 NOVA_NEUTRON_SERVICE_USER="${NOVA_NEUTRON_SERVICE_USER:-neutron}"
 #NOVA_NEUTRON_SERVICE_PASS
 NOVA_NEUTRON_SERVICE_TENANT_NAME="${NOVA_NEUTRON_SERVICE_TENANT_NAME:-service}"
-NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-None}"
+NOVA_NOTIFICATIONS="${NOVA_NOTIFICATIONS:-false}"
+NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-vm_state}"
 
 NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
 
-if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
-    # Turn off nova notification
-    NOTIFICATION_DRIVER="noop"
+if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+     NOTIFICATION_DRIVER="messagingv2"
 else
-    NOTIFICATION_DRIVER="messagingv2"
+    # Turn off notifications
+    NOTIFICATION_DRIVER="noop"
 fi
 
 # Configure the service with environment variables defined

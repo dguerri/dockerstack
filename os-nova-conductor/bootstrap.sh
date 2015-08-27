@@ -37,18 +37,19 @@ NOVA_GLANCE_API_URLS=${NOVA_GLANCE_API_URLS:-http://127.0.0.1:9292}
 NOVA_NEUTRON_SERVER_URL=${NOVA_NEUTRON_SERVER_URL:-http://127.0.0.1:9696/}
 NOVA_IRONIC_API_ENDPOINT=${NOVA_IRONIC_API_ENDPOINT:-http://127.0.0.1:6385/v1}
 NOVA_MEMCACHED_SERVERS="${NOVA_MEMCACHED_SERVERS:-}"
-NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-None}"
+NOVA_NOTIFICATIONS="${NOVA_NOTIFICATIONS:-false}"
+NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-vm_state}"
 
 NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
 
-if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
-    # Turn off nova notification
-    NOTIFICATION_DRIVER="noop"
+if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+     NOTIFICATION_DRIVER="messagingv2"
 else
-    NOTIFICATION_DRIVER="messagingv2"
+    # Turn off notifications
+    NOTIFICATION_DRIVER="noop"
 fi
 
 # Configure the service with environment variables defined

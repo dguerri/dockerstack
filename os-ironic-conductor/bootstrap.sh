@@ -45,6 +45,7 @@ IRONIC_MEMCACHED_SERVERS="${IRONIC_MEMCACHED_SERVERS:-}"
 IRONIC_TFTP_SERVER="${IRONIC_TFTP_SERVER:-\$my_ip}"
 IRONIC_IPXE_HTTP_URL="${IRONIC_IPXE_HTTP_URL:-http://\$my_ip:8080}"
 IRONIC_USE_IPXE="${IRONIC_USE_IPXE:-false}"
+IRONIC_NOTIFICATIONS="${IRONIC_NOTIFICATIONS:-false}"
 
 IRONIC_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
@@ -59,6 +60,13 @@ fi
 IRONIC_CONFIG_FILE="/etc/ironic/ironic.conf"
 AGENT_TEMPLATE="/etc/ironic/agent_config.template"
 
+if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
+     "$IRONIC_NOTIFICATIONS" == "True" ]; then
+     NOTIFICATION_DRIVER="messagingv2"
+else
+    # Turn off ironic notification
+    NOTIFICATION_DRIVER="noop"
+fi
 
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$IRONIC_CONFIG_FILE"
@@ -95,6 +103,8 @@ sed -i "s#%IRONIC_IPXE_HTTP_URL%#${IRONIC_IPXE_HTTP_URL}#" \
 sed -i "s#%PXE_BOOTFILE_NAME%#${PXE_BOOTFILE_NAME}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%PXE_CONFIG_TEMPLATE%#${PXE_CONFIG_TEMPLATE}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_USE_IPXE%#${IRONIC_USE_IPXE}#" "$IRONIC_CONFIG_FILE"
+sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$IRONIC_CONFIG_FILE"
+
 sed -i "s#%IRONIC_IPXE_HTTP_URL%#${IRONIC_IPXE_HTTP_URL}#" "$AGENT_TEMPLATE"
 
 # Migrate ironic database

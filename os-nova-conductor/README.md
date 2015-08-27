@@ -18,7 +18,8 @@
  `NOVA_NEUTRON_SERVER_URL` | | | N
  `NOVA_IRONIC_API_ENDPOINT` | | | N
  `NOVA_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
- `NOVA_NOTIFY_ON_STATE_CHANGE` | Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `None` | N
+ `NOVA_NOTIFICATIONS` | Whether to enable notifications in Nova | `false` | N
+ `NOVA_NOTIFY_ON_STATE_CHANGE` | Which notifications are sent. Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `vm_state` | N
 
 ## Examples
 
@@ -41,4 +42,5 @@
         --env NOVA_IRONIC_API_ENDPOINT="http://$IRONIC_API_HOSTNAME:6385/v1" \
         --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
         --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+        --env NOVA_NOTIFICATIONS="true" \
         os-nova-conductor

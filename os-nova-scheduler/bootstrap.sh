@@ -35,12 +35,14 @@ NOVA_SERVICE_USER=${NOVA_SERVICE_USER:-nova}
 #NOVA_SERVICE_PASS
 NOVA_MEMCACHED_SERVERS="${NOVA_MEMCACHED_SERVERS:-}"
 NOVA_USE_IRONIC="${NOVA_USE_IRONIC:-false}"
-NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-None}"
+NOVA_NOTIFICATIONS="${NOVA_NOTIFICATIONS:-false}"
+NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-vm_state}"
 
 NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
+
 if [ "$NOVA_USE_IRONIC" == "true" -o "$NOVA_USE_IRONIC" == "True" ]; then
     SCHEDULER_HOST_MANAGER=\
 "nova.scheduler.ironic_host_manager.IronicHostManager"
@@ -58,12 +60,13 @@ else
     /etc/init.d/libvirt-bin start
 fi
 
-if [ "$NOVA_NOTIFY_ON_STATE_CHANGE" == "None" ]; then
-    # Turn off nova notification
-    NOTIFICATION_DRIVER="noop"
+if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+     NOTIFICATION_DRIVER="messagingv2"
 else
-    NOTIFICATION_DRIVER="messagingv2"
+    # Turn off notifications
+    NOTIFICATION_DRIVER="noop"
 fi
+
 
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"

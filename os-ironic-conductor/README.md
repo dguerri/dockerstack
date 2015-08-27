@@ -25,6 +25,7 @@
  `IRONIC_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
  `IRONIC_TFTP_SERVER` | | | N
  `IRONIC_IPXE_HTTP_URL` | | | N
+ `IRONIC_NOTIFICATIONS` | Enable notifications | `false` | N
 
 
 ## Examples
@@ -57,4 +58,5 @@
         --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
         --env IRONIC_TFTP_SERVER="$tftpboot_server_ip" \
         --env IRONIC_IPXE_HTTP_URL="http://$httpboot_server_ip:8090" \
+        --env IRONIC_NOTIFICATIONS="true" \
         os-ironic-conductor

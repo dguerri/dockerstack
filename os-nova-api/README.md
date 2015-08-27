@@ -26,7 +26,8 @@
  `NOVA_IRONIC_SERVICE_PASS` | | | N
  `NOVA_IRONIC_AUTH_URI` | | | N
  `NOVA_IRONIC_SERVICE_TENANT_NAME` | | | N
- `NOVA_NOTIFY_ON_STATE_CHANGE` | Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `None` | N
+ `NOVA_NOTIFICATIONS` | Whether to enable notifications in Nova | `false` | N
+ `NOVA_NOTIFY_ON_STATE_CHANGE` | Which notifications are sent. Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `vm_state` | N
 
 ## Examples
 
@@ -54,5 +55,6 @@
         --env NOVA_IRONIC_AUTH_URI="$AUTH_URI" \
         --env NOVA_IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
+        --env NOVA_NOTIFICATIONS="true" \
         --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
         os-nova-api

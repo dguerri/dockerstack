@@ -22,6 +22,8 @@
  `IRONIC_RABBITMQ_USER` | | `ironic` | N
  `IRONIC_RABBITMQ_PASS` | | None | Y
  `IRONIC_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
+ `IRONIC_NOTIFICATIONS` | Enable notifications | `false` | N
+
 
 ## Examples
 
@@ -47,4 +49,5 @@
         --env IRONIC_NEUTRON_SERVER_URL="http://$NEUTRON_SERVER_HOSTNAME:9696" \
         --env IRONIC_CLEAN_NODE=true \
         --env IRONIC_MEMCACHED_SERVERS="$MEMCACHED_SERVERS" \
+        --env IRONIC_NOTIFICATIONS="true" \
         os-ironic-api

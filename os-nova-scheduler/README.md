@@ -16,7 +16,8 @@
  `NOVA_SERVICE_PASS` | | | Y
  `NOVA_MEMCACHED_SERVERS` | Memcached servers list (comma separated list of address:port couple) | Empty | N
  `NOVA_USE_IRONIC` | | `false` | N
- `NOVA_NOTIFY_ON_STATE_CHANGE` | Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `None` | N
+ `NOVA_NOTIFICATIONS` | Whether to enable notifications in Nova | `false` | N
+ `NOVA_NOTIFY_ON_STATE_CHANGE` | Which notifications are sent. Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `vm_state` | N
 
 ## Examples
 
@@ -37,4 +38,5 @@
         --env NOVA_MEMCACHED_SERVERS="$NOVA_MEMCACHED_SERVERS" \
         --env NOVA_USE_IRONIC="true"
         --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
+        --env NOVA_NOTIFICATIONS="true" \
         os-nova-scheduler
