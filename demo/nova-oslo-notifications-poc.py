@@ -44,7 +44,7 @@ class NotificationEndpoint(object):
             if old_state == "building" and state == "building" and \
                            old_task_state is None and new_task_state is None:
                 LOG.info(
-                    "*** [{0} UTC] Building of node {1} "
+                    "*** [{0} UTC] Deploy of node {1} "
                     "has just started".format(timestamp, node))
             elif old_state == "active" and state == "active" and \
                            old_task_state is None and new_task_state is None:
