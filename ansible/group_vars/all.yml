@@ -1,0 +1,92 @@
+---
+# Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Docker host hostname
+DOCKER_SERVER_HOSTNAME: "docker-server.local"
+# This is used for TFTP and iPXE HTTP
+DOCKER_SERVER_EXTERNAL_IP: "10.29.29.1"
+# Enable notifications.
+ENABLE_NOVA_NOTIFICATIONS: "true"
+ENABLE_IRONIC_NOTIFICATIONS: "false"
+
+AUTODNS_HOSTNAME: autodns.os-in-a-box
+MYSQL_HOSTNAME: mysql.os-in-a-box
+KEYSTONE_HOSTNAME: keystone.os-in-a-box
+RABBITMQ_HOSTNAME: rabbitmq.os-in-a-box
+MEMCACHED_HOSTNAME: memcached.os-in-a-box
+GLANCE_REGISTRY_HOSTNAME: glance-registry.os-in-a-box
+GLANCE_API_HOSTNAME: glance-api.os-in-a-box
+NEUTRON_SERVER_HOSTNAME: neutron-server.os-in-a-box
+NEUTRON_DHCP_AGENT_HOSTNAME: neutron-dhcp-agent.os-in-a-box
+NOVA_CONDUCTOR_HOSTNAME: nova-conductor.os-in-a-box
+NOVA_API_HOSTNAME: nova-api.os-in-a-box
+NOVA_SCHEDULER_HOSTNAME: nova-scheduler.os-in-a-box
+NOVA_COMPUTE_HOSTNAME: nova-compute.os-in-a-box
+SWIFT_PROXY_HOSTNAME: swift-proxy.os-in-a-box
+SWIFT_ACCOUNT_HOSTNAME: swift-account.os-in-a-box
+SWIFT_CONTAINER_HOSTNAME: swift-container.os-in-a-box
+SWIFT_OBJECT_HOSTNAME: swift-object.os-in-a-box
+IRONIC_API_HOSTNAME: ironic-api.os-in-a-box
+IRONIC_CONDUCTOR_HOSTNAME: ironic-conductor.os-in-a-box
+IPXE_HTTPD_HOSTNAME: ipxe-httpd.os-in-a-box
+PXE_TFTPD_HOSTNAME: pxe-tftp.os-in-a-box
+
+MYSQL_ROOT_PASSWORD: ooGee9Eu2kichaib0oos
+KEYSTONE_DB_USER: keystone
+KEYSTONE_DB_PASS: uu2xoh8veaS3Ia7Cochu
+GLANCE_DB_USER: glance
+GLANCE_DB_PASS: etaiPo2paefeitoowieN
+NEUTRON_DB_USER: neutron
+NEUTRON_DB_PASS: iejo6iec0xahshoep5Sh
+NOVA_DB_USER: nova
+NOVA_DB_PASS: shei6veelei4ofah8Aep
+IRONIC_DB_USER: ironic
+IRONIC_DB_PASS: Baeluthac4iNohfo4eip
+
+RABBITMQ_ERLANG_COOKIE: xoo4aighaew1daibae0zaej1esietho7oophiehuem8Gaenee4
+GLANCE_RABBITMQ_USER: glance
+GLANCE_RABBITMQ_PASS: Shohmaiy9Wai5Vahtuid
+NEUTRON_RABBITMQ_USER: neutron
+NEUTRON_RABBITMQ_PASS: oohai7geiRooChie5oQu
+NOVA_RABBITMQ_USER: nova
+NOVA_RABBITMQ_PASS: gai4jaiwohShoo0quaf0
+IRONIC_RABBITMQ_USER: ironic
+IRONIC_RABBITMQ_PASS: aeG1hu1Ik2ja0vua5aeg
+
+IDENTITY_URI: "http://{{ KEYSTONE_HOSTNAME }}:35357"
+AUTH_URI: "http://{{ KEYSTONE_HOSTNAME }}:5000/v2.0"
+MEMCACHED_SERVERS: "{{ MEMCACHED_HOSTNAME }}:11211"
+GLANCE_SWIFT_CONTAINER: "glance"
+IRONIC_SWIFT_TEMPURL_KEY: "TohNahNgab9ohSha4cheBail7za8Ohlei4ohb2oh"
+MYSQL_DATA_CONTAINER_NAME: mysql-data
+SWIFT_DEVS_DATA_CONTAINER_NAME: swift-devs-data
+SWIFT_RINGS_DATA_CONTAINER_NAME: swift-rings-data
+PXE_BOOT_DATA_CONTAINER_NAME: pxe-boot-data
+
+SERVICE_TENANT_NAME: service
+KEYSTONE_SERVICE_TOKEN: asohzee4cei2ahd6aig6caew6uapheewaezoGei7
+KEYSTONE_ADMIN_PASSWORD: Ve0eequaekeiyaebohlo
+GLANCE_SERVICE_USER: glance
+GLANCE_SERVICE_PASS: Wiem3ieceigiex6voo8a
+NEUTRON_SERVICE_USER: neutron
+NEUTRON_SERVICE_PASS: ou0eeNgoo6Paireiphoo
+NOVA_SERVICE_USER: nova
+NOVA_SERVICE_PASS: as0aMi4thaishaegae1e
+SWIFT_SERVICE_USER: swift
+SWIFT_SERVICE_PASS: aeya8la0eey5peih1Sa9
+IRONIC_SERVICE_USER: ironic
+IRONIC_SERVICE_PASS: euch1meeCooNgeaYiSah
+IRONIC_SWIFT_TEMP_URL_KEY: ahtui7veer7OoChaesoh0aich9coh3Iu5kaishoh

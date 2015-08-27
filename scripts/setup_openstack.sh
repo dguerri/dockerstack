@@ -106,6 +106,9 @@ nova flavor-create ParallelsVM auto "$NODE_RAM" "$NODE_DISK" "$NODE_CPUS"
 nova flavor-key ParallelsVM set cpu_arch="$NODE_ARCH"
 nova flavor-key ParallelsVM set capabilities:boot_option="local"
 
+# -- [ Nova Key Pair
+nova keypair-add --pub-key ~/.ssh/id_rsa keyp1
+
 # -- [ Ironic
 ironic node-create \
     --driver agent_ssh \

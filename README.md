@@ -47,7 +47,28 @@
 
 ### Example output
 
-    (davide:marley)-[0]-(~/D/openstack-docker) # make
+    (davide:marley)-[0]-(~/D/openstack-docker) # make test all
+    ☝️  os-mysql:latest - Not implemented
+    ☝️  os-httpboot:latest - Not implemented
+    ☝️  os-tftpboot:latest - Not implemented
+    ☝️  os-rabbitmq:latest - Not implemented
+    ☝️  os-memcached:latest - Not implemented
+    ✅  os-keystone:latest - Passed
+    ✅  os-glance-registry:latest - Passed
+    ✅  os-glance-api:latest - Passed
+    ✅  os-neutron-server:latest - Passed
+    ✅  os-nova-conductor:latest - Passed
+    ✅  os-nova-api:latest - Passed
+    ✅  os-nova-scheduler:latest - Passed
+    ✅  os-nova-compute:latest - Passed
+    ✅  os-neutron-dhcp-agent:latest - Passed
+    ✅  os-ironic-conductor:latest - Passed
+    ✅  os-ironic-api:latest - Passed
+    ✅  os-swift-proxy:latest - Passed
+    ✅  os-swift-account:latest - Passed
+    ✅  os-swift-object:latest - Passed
+    ✅  os-swift-container:latest - Passed
+    ☝️  os-base-image:latest - Not implemented
     🔨  os-base-image:latest - Done
     🔨  os-mysql:latest - Done
     🔨  os-httpboot:latest - Done
@@ -72,25 +93,8 @@
 
 ## Run
 
-    (davide:marley)-[0]-(~/D/openstack-docker) # ./start-the-mall.sh
-    + set -e
-    + set -u
-    + set -o pipefail
-    +++ dirname ./start-the-mall.sh
-    ++ cd .
-    ++ pwd
-    + SCRIPT_DIR=/Users/davide/Developer/openstack-docker
-    + DOCKER_SERVER_HOSTNAME=docker-server.local
-    + DOCKER_SERVER_EXTERNAL_IP=10.29.29.1
-
-_a lot of stuff_
-
-    + docker exec -i autodns.os-in-a-box nc -w1 -z glance-api.os-in-a-box 9292
-    + ret=0
-    + set -e
-    + '[' 0 -eq 0 ']'
-    + return 0
-    (davide:marley)-[0]-(~/D/openstack-docker) #
+    (davide:marley)-[0]-(~/D/openstack-docker) # cd ansible
+    (davide:marley)-[0]-(~/D/openstack-docker) # time ansible-playbook -i inventory/docker_server site.yml
 
 
 Then run `scripts/connect_external_net.sh` to attach eth1 (an external physical interface) to the provisioning network.
