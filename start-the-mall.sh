@@ -30,7 +30,7 @@ DOCKER_SERVER_HOSTNAME="docker-server.local"
 DOCKER_SERVER_EXTERNAL_IP="10.29.29.1"
 # Enable notifications.
 ENABLE_NOVA_NOTIFICATIONS="true"
-ENABLE_IRONIC_NOTIFICATIONS="true"
+ENABLE_IRONIC_NOTIFICATIONS="false"
 
 # -------------------------------------
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

@@ -62,10 +62,12 @@ AGENT_TEMPLATE="/etc/ironic/agent_config.template"
 
 if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
      "$IRONIC_NOTIFICATIONS" == "True" ]; then
-     NOTIFICATION_DRIVER="messagingv2"
+    NOTIFICATION_DRIVER="messagingv2"
+    SEND_SENSOR_DATA="true"
 else
     # Turn off ironic notification
     NOTIFICATION_DRIVER="noop"
+    SEND_SENSOR_DATA="false"
 fi
 
 # Configure the service with environment variables defined
@@ -104,6 +106,7 @@ sed -i "s#%PXE_BOOTFILE_NAME%#${PXE_BOOTFILE_NAME}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%PXE_CONFIG_TEMPLATE%#${PXE_CONFIG_TEMPLATE}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%IRONIC_USE_IPXE%#${IRONIC_USE_IPXE}#" "$IRONIC_CONFIG_FILE"
 sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$IRONIC_CONFIG_FILE"
+sed -i "s#%SEND_SENSOR_DATA%#${SEND_SENSOR_DATA}#" "$IRONIC_CONFIG_FILE"
 
 sed -i "s#%IRONIC_IPXE_HTTP_URL%#${IRONIC_IPXE_HTTP_URL}#" "$AGENT_TEMPLATE"
 

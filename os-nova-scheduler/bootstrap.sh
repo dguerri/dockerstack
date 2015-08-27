@@ -65,8 +65,8 @@ if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
 else
     # Turn off notifications
     NOTIFICATION_DRIVER="noop"
+    NOVA_NOTIFY_ON_STATE_CHANGE="None"
 fi
-
 
 # Configure the service with environment variables defined
 sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"

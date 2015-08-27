@@ -29,46 +29,45 @@ class NotificationEndpoint(object):
         LOG.error("This is 'just' a warning!")
 
     def info(self, ctxt, publisher_id, event_type, payload, metadata):
+        if event_type == "compute.instance.update":
+            node = payload.get("node")
+            if node is None:
+                LOG.debug("Node is None for instance_update()")
+                return
 
-        node = payload.get("node")
-        if node is None:
-            LOG.debug("Node is None for instance_update()")
-            return
+            old_state = payload.get("old_state")
+            state = payload.get("state")
+            old_task_state = payload.get("old_task_state")
+            new_task_state = payload.get("new_task_state")
+            timestamp = metadata['timestamp']
 
-        old_state = payload.get("old_state")
-        state = payload.get("state")
-        old_task_state = payload.get("old_task_state")
-        new_task_state = payload.get("new_task_state")
-        timestamp = metadata['timestamp']
+            LOG.info("************ {0} - {1}".format(publisher_id, event_type))
+            pprint.pprint(payload)
 
-        if old_state == "building" and state == "building" and \
-                        old_task_state is None and new_task_state is None:
-            LOG.info(
-                "*** [{0} UTC] Building of node {1} has just started".format(
-                    timestamp, node))
-        elif old_state == "active" and state == "active" and \
-                        old_task_state is None and new_task_state is None:
-            LOG.info("*** [{0} UTC] Node {1} is now active (rebuild)".format(
-                timestamp, node))
-        elif old_state == "building" and state == "active" and \
-                        old_task_state == "spawning" and \
-                        new_task_state is None:
-            LOG.info(
-                "*** [{0} UTC] Node {1} is now active (first deploy)".format(
-                    timestamp, node))
-        elif old_task_state == "deleting" and new_task_state == "deleting":
-            LOG.info(
-                "*** [{0} UTC] Deletion of node {1} has just started".format(
-                    timestamp, node))
-        elif old_task_state == "rebuild_spawning" and \
-                        new_task_state == "rebuild_spawning":
-            LOG.info("*** [{0} UTC] Node {1} is about to be rebuilt".format(
-                timestamp, node))
-        #elif old_state is None and state == "deleted" and \
-        #                old_task_state is None and new_task_state is None:
-        #    LOG.info(
-        #        "*** [{0} UTC] Node {1} has been deleted".format(timestamp,
-        #                                                         node))
+            if old_state == "building" and state == "building" and \
+                           old_task_state is None and new_task_state is None:
+               LOG.info("*** [{0} UTC]"
+                        " Building of node {1} has just started".format(
+                            timestamp, node))
+            elif old_state == "active" and state == "active" and \
+                           old_task_state is None and new_task_state is None:
+               LOG.info("*** [{0} UTC] Node {1} is now active (rebuild)".format(
+                   timestamp, node))
+            elif old_state == "building" and state == "active" and \
+                           old_task_state == "spawning" and \
+                           new_task_state is None:
+               LOG.info(
+                   "*** [{0} UTC] Node {1} is now active (first deploy)".format(
+                       timestamp, node))
+            elif old_task_state == "deleting" and new_task_state == "deleting":
+               LOG.info(
+                   "*** [{0} UTC] Deletion of node {1} has just started".format(
+                       timestamp, node))
+            elif old_task_state == "rebuild_spawning" and \
+                           new_task_state == "rebuild_spawning":
+               LOG.info("*** [{0} UTC] Node {1} is about to be rebuilt".format(
+                   timestamp, node))
+
 
 
 transport = oslo_messaging.get_transport(

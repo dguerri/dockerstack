@@ -50,10 +50,12 @@ CONFIG_FILE="/etc/ironic/ironic.conf"
 
 if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
      "$IRONIC_NOTIFICATIONS" == "True" ]; then
-     NOTIFICATION_DRIVER="messagingv2"
+    NOTIFICATION_DRIVER="messagingv2"
+    SEND_SENSOR_DATA="true"
 else
     # Turn off notifications
     NOTIFICATION_DRIVER="noop"
+    SEND_SENSOR_DATA="false"
 fi
 
 
@@ -81,6 +83,7 @@ sed -i "s#%IRONIC_RABBITMQ_HOST%#${IRONIC_RABBITMQ_HOST}#" "$CONFIG_FILE"
 sed -i "s#%IRONIC_RABBITMQ_USER%#${IRONIC_RABBITMQ_USER}#" "$CONFIG_FILE"
 sed -i "s#%IRONIC_RABBITMQ_PASS%#${IRONIC_RABBITMQ_PASS}#" "$CONFIG_FILE"
 sed -i "s#%NOTIFICATION_DRIVER%#${NOTIFICATION_DRIVER}#" "$CONFIG_FILE"
+sed -i "s#%SEND_SENSOR_DATA%#${SEND_SENSOR_DATA}#" "$CONFIG_FILE"
 
 # Migrate ironic database
 sudo -u ironic ironic-dbsync -v upgrade
