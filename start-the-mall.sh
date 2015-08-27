@@ -21,6 +21,9 @@ set -e
 set -u
 set -o pipefail
 
+# Create images
+make
+
 # Docker host hostname
 DOCKER_SERVER_HOSTNAME="docker-server.local"
 # This is used for TFTP and iPXE HTTP
@@ -125,9 +128,6 @@ wait_host() {
 get_container_ip() {
     docker inspect --format '{{ .NetworkSettings.IPAddress }}' "$1"
 }
-
-# Create images
-make
 
 # Start containers
 # ----[ AutoDNS
@@ -505,7 +505,6 @@ wait_host "$IPXE_HTTPD_HOSTNAME" 80
 httpboot_server_ip=$(get_container_ip $IPXE_HTTPD_HOSTNAME)
 
 # ----[ Ironic Conductor
-# Enable temporary url in swift
 docker run -d \
     --restart=always \
     --name "$IRONIC_CONDUCTOR_HOSTNAME" \
@@ -768,13 +767,6 @@ docker run -d \
 
 wait_host "$SWIFT_PROXY_HOSTNAME" 8080
 
-# Enable tempurls in swift
-docker exec -i "$SWIFT_PROXY_HOSTNAME" \
-    swift --os-username="$SERVICE_TENANT_NAME:$SWIFT_SERVICE_USER" \
-          --os-password="$SWIFT_SERVICE_PASS" \
-          --os-auth-url="$AUTH_URI" \
-          post -m temp-url-key:"$IRONIC_SWIFT_TEMP_URL_KEY"
-
 # ----[ Glance Registry
 docker run -d \
     --restart=always \
@@ -820,3 +812,10 @@ docker run -d \
     os-glance-api
 
 wait_host "$GLANCE_API_HOSTNAME" 9292
+
+# Enable tempurls in swift for the service tenant for glance images
+docker exec -i "$GLANCE_API_HOSTNAME" \
+    swift --os-username="$SERVICE_TENANT_NAME:$GLANCE_SERVICE_USER" \
+          --os-password="$GLANCE_SERVICE_PASS" \
+          --os-auth-url="http://$DOCKER_SERVER_HOSTNAME:5000/v2.0" \
+          post -m temp-url-key:"$IRONIC_SWIFT_TEMP_URL_KEY"
