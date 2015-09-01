@@ -107,7 +107,7 @@ nova flavor-key ParallelsVM set cpu_arch="$NODE_ARCH"
 nova flavor-key ParallelsVM set capabilities:boot_option="local"
 
 # -- [ Nova Key Pair
-nova keypair-add --pub-key ~/.ssh/id_rsa keyp1
+nova keypair-add --pub-key ~/.ssh/id_rsa.pub keyp1
 
 # -- [ Ironic
 ironic node-create \
