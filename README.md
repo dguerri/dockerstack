@@ -2,6 +2,21 @@
 
 ![A picture is worth a thousand words](doc/demo.png)
 
+## Prerequisites
+
+ * [Docker](https://www.docker.com) 1.6.0 or later
+ * [docker-py](https://github.com/docker/docker-py) version 1.2.3 on the ansible server running the playbook
+ * [MySQL-python](https://pypi.python.org/pypi/MySQL-python) on the ansible server running the playbook
+ * OpenStack python clients for Keystone, Glance, Neutron, Swift, Ironic and Nova on the ansible server running the playbook
+
+If you are using an Ubuntu box, above requirements require in turn:
+
+    apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev
+
+ * Testing requires [shellcheck](http://www.shellcheck.net/about.html) 1.3.8 or later.
+
+If you are going to build the containers behind a proxy (not recommended), you will have to tweak both the Docker default configuration file and the os-base-image Dockerfile. [Here](http://nknu.net/running-docker-behind-a-proxy-on-ubuntu-14-04/) is a good guide about that.
+
 ## Clean
 
     # Clean version 1.0 with 5 parallel processes
@@ -91,7 +106,17 @@
     🔨  os-swift-object:latest - Done
     🔨  os-swift-container:latest - Done
 
-## Run
+## Run the demo
+
+The included demo depends on [autodns](https://github.com/rehabstudio/docker-autodns) from rehabstudio. This is not a strict requirement for the proposed infrastructure so you can use your preferred DNS, as long as it can be configured during the creation of containers. Using Ansible to configure an external DNS or even using Avahi daemon are possible alternatives.
+
+For the sake of this demo, as described [here](https://github.com/rehabstudio/docker-autodns#prerequisites), the docker daemon should be started with the following parameters:
+
+    DOCKER_OPTS="--bip=172.17.42.1/16 --dns=172.17.42.1 --dns=<your resolver1> [--dns=<your resolver2> [...]]"
+
+Add `nameserver 127.0.0.1` on top of the resolv.conf file running the docker server.
+
+Run `ansible-playbook`:
 
     (davide:marley)-[0]-(~/D/openstack-docker) # cd ansible
     (davide:marley)-[0]-(~/D/openstack-docker) # time ansible-playbook -i inventory/docker_server site.yml
