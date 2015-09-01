@@ -17,7 +17,8 @@
 # Docker host hostname
 DOCKER_SERVER_HOSTNAME: "docker-server.local"
 # This is used for TFTP and iPXE HTTP
-DOCKER_SERVER_EXTERNAL_IP: "10.29.29.1"
+DOCKER_SERVER_INTERNAL_IP: "10.29.29.1"
+DOCKER_SERVER_EXTERNAL_IP: "{{ ansible_eth0.ipv4.address }}"
 # Enable notifications.
 ENABLE_NOVA_NOTIFICATIONS: "true"
 ENABLE_IRONIC_NOTIFICATIONS: "false"

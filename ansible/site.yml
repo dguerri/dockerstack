@@ -385,8 +385,8 @@
           IRONIC_NEUTRON_SERVER_URL: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696"
           IRONIC_CLEAN_NODE: "false"
           IRONIC_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
-          IRONIC_TFTP_SERVER: "{{ DOCKER_SERVER_EXTERNAL_IP }}"
-          IRONIC_IPXE_HTTP_URL: "http://{{ DOCKER_SERVER_EXTERNAL_IP }}:8090"
+          IRONIC_TFTP_SERVER: "{{ DOCKER_SERVER_INTERNAL_IP }}"
+          IRONIC_IPXE_HTTP_URL: "http://{{ DOCKER_SERVER_INTERNAL_IP }}:8090"
           IRONIC_USE_IPXE: "true"
           IRONIC_NOTIFICATIONS: "{{ ENABLE_IRONIC_NOTIFICATIONS }}"
 
@@ -792,19 +792,19 @@
 
     - name: Get temp-url-key for the service tenant
       shell: |
-        docker exec -i "{{ GLANCE_API_HOSTNAME }}" \
-          swift --os-username="{{ SERVICE_TENANT_NAME }}:{{ GLANCE_SERVICE_USER }}" \
-                --os-password="{{ GLANCE_SERVICE_PASS }}" \
-                --os-auth-url="http://{{ DOCKER_SERVER_HOSTNAME }}:5000/v2.0" \
-                stat
+        swift \
+          --os-username="{{ SERVICE_TENANT_NAME }}:{{ GLANCE_SERVICE_USER }}" \
+          --os-password="{{ GLANCE_SERVICE_PASS }}" \
+          --os-auth-url="http://{{ DOCKER_SERVER_HOSTNAME }}:5000/v2.0" \
+          stat
       register: swift_temp_url_key
       changed_when: false
 
     - name: Set temp-url-key for the service tenant
       shell: |
-        docker exec -i "{{ GLANCE_API_HOSTNAME }}" \
-          swift --os-username="{{ SERVICE_TENANT_NAME }}:{{ GLANCE_SERVICE_USER }}" \
-                --os-password="{{ GLANCE_SERVICE_PASS }}" \
-                --os-auth-url="http://{{ DOCKER_SERVER_HOSTNAME }}:5000/v2.0" \
-                post -m temp-url-key:"{{ IRONIC_SWIFT_TEMP_URL_KEY }}"
+        swift \
+          --os-username="{{ SERVICE_TENANT_NAME }}:{{ GLANCE_SERVICE_USER }}" \
+          --os-password="{{ GLANCE_SERVICE_PASS }}" \
+          --os-auth-url="http://{{ DOCKER_SERVER_HOSTNAME }}:5000/v2.0" \
+          post -m temp-url-key:"{{ IRONIC_SWIFT_TEMP_URL_KEY }}"
       when: swift_temp_url_key.stdout.find("{{ IRONIC_SWIFT_TEMP_URL_KEY }}") == -1
