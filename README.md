@@ -5,10 +5,13 @@
 ## Prerequisites
 
  * [Docker](https://www.docker.com) 1.6.0 or later
+
  * [docker-py](https://github.com/docker/docker-py) version 1.2.3 on the ansible server running the playbook
  * [MySQL-python](https://pypi.python.org/pypi/MySQL-python) on the ansible server running the playbook
  * OpenStack python clients for Keystone, Glance, Neutron, Swift, Ironic and Nova on the ansible server running the playbook
 
+    pip install python-{keystone,neutron,ironic,nova,glance,swift}client docker-py==1.2.3 MySQL-python
+ 
 If you are using an Ubuntu box, above requirements require in turn:
 
     apt-get install libmysqlclient-dev libxml2-dev libxslt1-dev
