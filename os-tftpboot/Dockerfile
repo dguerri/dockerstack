@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-FROM ubuntu:14.04
+FROM os-base-image
 MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 
 RUN set -x \
