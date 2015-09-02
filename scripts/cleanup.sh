@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,8 +16,8 @@
 # limitations under the License.
 #
 
-neutron net-delete external
-nova keypair-list | awk '/([0-9a-f]{2}\:){15}/ {print $2}' | xargs nova keypair-delete
-nova flavor-list | awk '/ParallelsVM/ { print $2}' | xargs nova flavor-delete
-glance image-list | awk '/\| [0-9a-f]/ { print $2}' | xargs glance image-delete
-ironic node-list | awk '/\| [0-9a-f]/ { print $2}' | xargs ironic node-delete
+openstack network delete external
+openstack keypair list -f value | awk '{print $1}' | xargs -L1 openstack keypair delete
+openstack flavor list -f value | awk '{print $1}' | xargs -L1 openstack flavor delete
+openstack image list -f value | awk '{print $1}' | xargs -L1 openstack image delete
+ironic node-list | awk '/\| [0-9a-f]/ { print $2}' | xargs -L1 ironic node-delete

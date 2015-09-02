@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -25,6 +25,8 @@ GATEWAY="10.29.29.1"
 START_IP="10.29.29.20"
 END_IP="10.29.29.200"
 DNS="10.29.29.1"
+
+FLAVOR_NAME="ParallelsVM"
 
 NODE_CPUS=1
 NODE_RAM=2048
@@ -67,44 +69,47 @@ download_if_not_exist \
 download_if_not_exist \
     http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
 
-glance image-create \
-    --name="Cirros 0.3.4 - x86_64" \
-    --is-public=true \
-    --container-format=bare \
-    --disk-format=qcow2 \
-    --progress \
-    --file "$SCRIPT_DIR/cirros-0.3.4-x86_64-disk.img"
+openstack image create \
+    --public \
+    --container-format bare \
+    --disk-format qcow2 \
+    --file "$SCRIPT_DIR/cirros-0.3.4-x86_64-disk.img" \
+    "Cirros 0.3.4 - x86_64"
 
-glance image-create \
-    --name="Ubuntu Vivid - x86_64" \
-    --is-public=true \
-    --container-format=bare \
-    --disk-format=qcow2 \
-    --progress \
-    --file "$SCRIPT_DIR/vivid-server-cloudimg-amd64-disk1.img"
+openstack image create \
+    --public \
+    --container-format bare \
+    --disk-format qcow2 \
+    --file "$SCRIPT_DIR/vivid-server-cloudimg-amd64-disk1.img" \
+    "Ubuntu Vivid - x86_64"
 
-glance image-create \
-    --name "IPA deploy kernel - x86_64" \
-    --is-public True \
+openstack image create \
+    --public \
+    --container-format aki \
     --disk-format aki \
-    --progress \
-    --file "$SCRIPT_DIR/coreos_production_pxe.vmlinuz"
+    --file "$SCRIPT_DIR/coreos_production_pxe.vmlinuz" \
+    "IPA deploy kernel - x86_64"
 
 kernel_id="$(glance image-list | awk '/IPA deploy kernel - x86_64/ {print $2}')"
 
-glance image-create \
-    --name "IPA deploy initrd - x86_64" \
-    --is-public True \
+openstack image create \
+    --public \
+    --container-format ari \
     --disk-format ari \
-    --progress \
-    --file "$SCRIPT_DIR/coreos_production_pxe_image-oem.cpio.gz"
+    --file "$SCRIPT_DIR/coreos_production_pxe_image-oem.cpio.gz" \
+    "IPA deploy initrd - x86_64"
 
 initrd_id="$(glance image-list | awk '/IPA deploy initrd - x86_64/ {print $2}')"
 
 # -- [ Nova flavor
-nova flavor-create ParallelsVM auto "$NODE_RAM" "$NODE_DISK" "$NODE_CPUS"
-nova flavor-key ParallelsVM set cpu_arch="$NODE_ARCH"
-nova flavor-key ParallelsVM set capabilities:boot_option="local"
+openstack flavor create --ram "$NODE_RAM" --disk "$NODE_DISK" --vcpus "$NODE_CPUS" $FLAVOR_NAME
+nova flavor-key $FLAVOR_NAME set cpu_arch="$NODE_ARCH"
+nova flavor-key $FLAVOR_NAME set capabilities:boot_option="local"
+
+# -- [ Fix quotas for baremetal
+nova quota-class-update --instances 1000 default
+nova quota-class-update --cores 48000 default
+nova quota-class-update --ram 128000 default
 
 # -- [ Nova Key Pair
 nova keypair-add --pub-key ~/.ssh/id_rsa.pub keyp1
