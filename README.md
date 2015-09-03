@@ -18,7 +18,7 @@ If you are using an Ubuntu box, above requirements require in turn:
 
  * Testing requires [shellcheck](http://www.shellcheck.net/about.html) 1.3.8 or later.
 
-If you are going to build the containers behind a proxy (not recommended), you will have to tweak both the Docker default configuration file and the os-base-image Dockerfile. [Here](http://nknu.net/running-docker-behind-a-proxy-on-ubuntu-14-04/) is a good guide about that.
+If you are going to build the containers behind a proxy (_not recommended_), you will have to tweak both the Docker default configuration file and the os-base-image Dockerfile. [Here](http://nknu.net/running-docker-behind-a-proxy-on-ubuntu-14-04/) is a good guide about that.
 
 ## Clean
 
