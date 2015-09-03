@@ -43,6 +43,9 @@ RUN set -x \
     && cd / \
     && patch -p0 < /root/ssh.py.diff
 
+# workaround for hardware with older iPXE versions
+COPY boot.ipxe /usr/lib/python2.7/dist-packages/ironic/drivers/modules/boot.ipxe
+
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
