@@ -17,3 +17,5 @@
 
 FROM mysql:5.6
 MAINTAINER Davide Guerri <davide.guerri@gmail.com>
+
+COPY max_connections.cnf /etc/mysql/conf.d/max_connections.cnf
