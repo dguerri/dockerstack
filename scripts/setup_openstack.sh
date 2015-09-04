@@ -109,7 +109,7 @@ nova flavor-key $FLAVOR_NAME set capabilities:boot_option="local"
 # -- [ Fix quotas for baremetal
 nova quota-class-update --instances 1000 default
 nova quota-class-update --cores 48000 default
-nova quota-class-update --ram 128000 default
+nova quota-class-update --ram 128000000 default
 
 # -- [ Nova Key Pair
 nova keypair-add --pub-key ~/.ssh/id_rsa.pub keyp1
