@@ -47,8 +47,10 @@ ovs-vsctl add-port provisioning ext0
 ip link set dev ext1 netns "$docker_pid"
 
 # Attach ext1 to br-ex
+docker exec "$container_name" ovs-vsctl port-to-br ext1 && \
+    docker exec "$container_name" ovs-vsctl del-port br-ex ext1
 docker exec "$container_name" ip link set dev ext1 up
+docker exec "$container_name" ovs-vsctl add-port br-ex ext1
 
 # Assign the IP
-#docker exec "$container_name" ip addr add "$IP" dev br-ex
 ip addr add "$IP" dev provisioning

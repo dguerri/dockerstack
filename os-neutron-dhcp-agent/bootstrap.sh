@@ -79,13 +79,8 @@ sed -i "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
 
 # Create external bridge
 ovs-vsctl br-exists br-ex && ovs-vsctl del-br br-ex
-if [ -d "/sys/class/net/$EXTERNAL_INTERFACE_NAME" ]; then
-  ip link del dev "$EXTERNAL_INTERFACE_NAME"
-fi
-
 ovs-vsctl add-br br-ex
 ip link set dev br-ex up
-ovs-vsctl add-port br-ex "$EXTERNAL_INTERFACE_NAME"
 
 # Start OVS agent
 /usr/bin/python /usr/bin/neutron-openvswitch-agent \
