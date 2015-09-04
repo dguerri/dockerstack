@@ -92,6 +92,8 @@
         login_host: "{{ MYSQL_HOSTNAME }}"
         login_user: root
         login_password: "{{ MYSQL_ROOT_PASSWORD }}"
+        encoding: "utf8"
+        collation: "utf8_general_ci"
       with_items:
         - glance
         - ironic
