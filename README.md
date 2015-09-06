@@ -11,7 +11,7 @@
  * OpenStack python clients for Keystone, Glance, Neutron, Swift, Ironic and Nova on the ansible server running the playbook
 
         pip install python-{keystone,neutron,ironic,nova,glance,swift}client docker-py==1.2.3 MySQL-python
-    
+
 
 If you are using an Ubuntu box, above requirements require in turn:
 
@@ -102,7 +102,9 @@ The included Ansible playbook also creates a number of data containers to demons
 ### Demo
 The included demo consists of an Ansible playbook and 2 shell scripts. It is designed for Parallels Desktop and requires an unprovisioned virtual machine with one NIC with MAC address `00:1C:42:89:64:34`.
 
-The demo also uses [autodns](https://github.com/rehabstudio/docker-autodns) from rehabstudio. This is not a strict requirement for the proposed infrastructure so you can use your preferred DNS, as long as it can be configured dynamically during the creation of containers. 
+![Parallels Desktop VM NIC configuration](doc/pd-nic.png)
+
+The demo also uses [autodns](https://github.com/rehabstudio/docker-autodns) from rehabstudio. This is not a strict requirement for the proposed infrastructure so you can use your preferred DNS, as long as it can be configured dynamically during the creation of containers.
 
 Using Ansible to configure an external DNS or even using Avahi daemon are possible alternatives.
 
@@ -118,6 +120,25 @@ __Run the demo:__
 
         ~# cd ansible
         ~# time ansible-playbook -i inventory/docker_server site.yml
+
+        [...]
+
+        TASK: [Waiting for Glance API to become available] ****************************
+        ok: [docker-server.local]
+
+        TASK: [Get temp-url-key for the service tenant] *******************************
+        ok: [docker-server.local]
+
+        TASK: [Set temp-url-key for the service tenant] *******************************
+        changed: [docker-server.local]
+
+        PLAY RECAP ********************************************************************
+        docker-server.local        : ok=61   changed=37   unreachable=0    failed=0   
+
+
+        real	2m16.800s
+        user	0m2.986s
+        sys	0m2.249s
 
  After a successful play, you should have the following list of containers (output of `docker ps -a`, edited):
 
@@ -177,4 +198,3 @@ This also creates a virtual switch and a couple of veth interfaces. Il also "pus
               └────┘                                                        
 
 3. run `scripts/setup_openstack.sh` to create the initial demo setup for BM provisioning.
-
