@@ -116,36 +116,65 @@ __Run the demo:__
 
 1. Run `ansible-playbook`:
 
-        (davide:marley)-[0]-(~/D/openstack-docker) # cd ansible
-        (davide:marley)-[0]-(~/D/o/ansible) # time ansible-playbook -i inventory/docker_server site.yml
+        ~# cd ansible
+        ~# time ansible-playbook -i inventory/docker_server site.yml
 
+ After a successful play, you should have the following list of containers (output of `docker ps -a`, edited):
+
+        IMAGE                   PORTS                      NAMES
+        os-glance-api           0.0.0.0:9292->9292/tcp     glance-api.os-in-a-box
+        os-glance-registry      9191/tcp                   glance-registry.os-in-a-box
+        os-swift-proxy          0.0.0.0:8080->8080/tcp     swift-proxy.os-in-a-box
+        os-swift-object         6000/tcp                   swift-object.os-in-a-box
+        os-swift-container      6001/tcp                   swift-container.os-in-a-box
+        os-swift-account        6002/tcp                   swift-account.os-in-a-box
+        os-base-image                                      swift-devs-data
+        os-base-image                                      swift-rings-data
+        os-nova-compute                                    nova-compute.os-in-a-box
+        os-nova-scheduler                                  nova-scheduler.os-in-a-box
+        os-nova-api             0.0.0.0:8774->8774/tcp     nova-api.os-in-a-box
+        os-nova-conductor                                  nova-conductor.os-in-a-box
+        os-neutron-dhcp-agent                              neutron-dhcp-agent.os-in-a-box
+        os-neutron-server       0.0.0.0:9696->9696/tcp     neutron-server.os-in-a-box
+        os-ironic-api           0.0.0.0:6385->6385/tcp     ironic-api.os-in-a-box
+        os-ironic-conductor                                ironic-conductor.os-in-a-box
+        os-httpboot             0.0.0.0:8090->80/tcp       ipxe-httpd.os-in-a-box
+        os-tftpboot             0.0.0.0:69->69/udp         pxe-tftp.os-in-a-box
+        os-base-image                                      pxe-boot-data
+        os-rabbitmq             5672/tcp                   rabbitmq.os-in-a-box
+        os-keystone             0.0.0.0:5000->5000/tcp,    keystone.os-in-a-box
+                                0.0.0.0:35357->35357/tcp
+        os-mysql                3306/tcp                   mysql.os-in-a-box
+        os-base-image                                      mysql-data
+        os-memcached            11211/tcp                  memcached.os-in-a-box
+        rehabstudio/autodns     0.0.0.0:53->53/udp         autodns.os-in-a-box
 
 2. run `scripts/connect_external_net.sh` to attach `eth1` (an external physical interface) to the provisioning network.
 This also creates a virtual switch and a couple of veth interfaces. Il also "pushes" one of the 2 veth interface in the `neutron-dhcp-agent` container.
 
  The following picture shows the final (virtual) networking configuration after running `scripts/connect_external_net.sh`:
 
-        ┌────────────────────────────────────────────────────────────┐      ┌─┐
-        │┌──────────────────────────────────────────────────────────┐│      │ │   ┌────────┐
-        ││                         docker0                          ││      │p│───│BM node │
-        │└──────────────────────────────────────────────────────────┘│      │h│   └────────┘
-        │             │                           │                  │      │y│
-        │             │                           │                  │      │s│
-        │┌─────────────────────────┐              │                  │      │i│
-        ││   Neutron DHCP Agent    │    ┌──────────────────┐         │      │c│   ┌────────┐
-        ││        Container        │    │ ┌────────────────┴─┐       │      │a│───│BM node │
-        ││                         │    │ │ ┌────────────────┴─┐     │      │l│   └────────┘
-        ││ ┌──────────────────────┐│    │ │ │ ┌────────────────┴─┐   │      │-│
-        ││ │        br-ex  ┌────┐ ││    │ │ │ │ Other containers │   │      │n│
-        ││ └───────────────┤ext1├─┘│    └─┤ │ │                  │   │      │e│
-        ││                 └────┘  │      └─┤ │                  │   │      │t│
-        ││                    │    │        └─┤                  │   │      │w│
-        │└────────────────────┼────┘          └──────────────────┘   │      │o│
-        │                     │                                      │      │r│
-        │                  ┌────┐        ┌───────────────┐         ┌─┴──┐   │k│   ┌────────┐
-        │                  │ext0│────────│ provisioning  │─────────│eth1│───│ │───│BM node │
-        │        ┌────┐    └────┘        └───────────────┘         └─┬──┘   │ │   └────────┘
-        └────────┤eth0├──────────────────────────────────────────────┘      └─┘
-                 └────┘
+        ┌──────────────────────────────────────────────────┐   ┌─┐ ┌───────┐
+        │ ┌────────────────────────────────────────────┐   │   │ │─│BM node│
+        │ │                  docker0                   │   │   │p│ └───────┘
+        │ └────────────────────────────────────────────┘   │   │h│          
+        │           │                       │              │   │y│          
+        │           │                       │              │   │s│          
+        │┌────────────────────┐    ┌────────────────┐      │   │i│ ┌───────┐
+        ││ Neutron DHCP Agent │    │ ┌──────────────┴─┐    │   │c│─│BM node│
+        ││     Container      │    │ │ ┌──────────────┴─┐  │   │a│ └───────┘
+        ││┌──────────────────┐│    │ │ │ ┌──────────────┴─┐│   │l│          
+        │││      br-ex┌────┐ ││    │ │ │ │Other containers││   │-│          
+        ││└───────────┤ext1├─┘│    └─┤ │ │                ││   │n│          
+        ││            └────┘  │      └─┤ │                ││   │e│          
+        ││               │    │        └─┤                ││   │t│          
+        │└───────────────┼────┘          └────────────────┘│   │w│          
+        │                │                                 │   │o│          
+        │             ┌────┐      ┌───────────────┐     ┌──┴─┐ │r│ ┌───────┐
+        │             │ext0│──────│ provisioning  │─────│eth1│─│k│─│BM node│
+        │     ┌────┐  └────┘      └───────────────┘     └──┬─┘ │ │ └───────┘
+        └─────┤eth0├───────────────────────────────────────┘   └─┘          
+              └────┘                                                        
 
 3. run `scripts/setup_openstack.sh` to create the initial demo setup for BM provisioning.
+
