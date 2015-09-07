@@ -48,7 +48,7 @@ NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 NOVA_CONFIG_FILE="/etc/nova/nova.conf"
 NOVA_COMPUTE_CONFIG_FILE="/etc/nova/nova-compute.conf"
 
-if [ "$NOVA_USE_IRONIC" == "true" -o "$NOVA_USE_IRONIC" == "True" ]; then
+if [ "$NOVA_USE_IRONIC" == "true" ] || [ "$NOVA_USE_IRONIC" == "True" ]; then
     FIREWALL_DRIVER="nova.virt.firewall.NoopFirewallDriver"
     COMPUTE_DRIVER="nova.virt.ironic.IronicDriver"
     COMPUTE_MANAGER="ironic.nova.compute.manager.ClusteredComputeManager"
@@ -62,7 +62,8 @@ else
     /etc/init.d/libvirt-bin start
 fi
 
-if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+if [ "$NOVA_NOTIFICATIONS" == "true" ] \
+    || [ "$NOVA_NOTIFICATIONS" == "True" ]; then
      NOTIFICATION_DRIVER="messagingv2"
 else
     # Turn off notifications

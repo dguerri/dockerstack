@@ -40,7 +40,7 @@ DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
 
-if [ "$NOVA_USE_IRONIC" == "true" -o "$NOVA_USE_IRONIC" == "True" ]; then
+if [ "$NOVA_USE_IRONIC" == "true" ] || [ "$NOVA_USE_IRONIC" == "True" ]; then
     SCHEDULER_HOST_MANAGER=\
 "nova.scheduler.ironic_host_manager.IronicHostManager"
     SCHEDULER_USE_BAREMETAL_FILTERS=True
@@ -57,7 +57,8 @@ else
     /etc/init.d/libvirt-bin start
 fi
 
-if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+if [ "$NOVA_NOTIFICATIONS" == "true" ] \
+    || [ "$NOVA_NOTIFICATIONS" == "True" ]; then
      NOTIFICATION_DRIVER="messagingv2"
 else
     # Turn off notifications

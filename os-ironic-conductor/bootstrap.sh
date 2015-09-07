@@ -48,7 +48,7 @@ IRONIC_NOTIFICATIONS="${IRONIC_NOTIFICATIONS:-false}"
 IRONIC_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 DATABASE_CONNECTION=\
 "mysql://${IRONIC_DB_USER}:${IRONIC_DB_PASS}@${IRONIC_DB_HOST}/ironic"
-if [ "$IRONIC_USE_IPXE" == "true" -o "$IRONIC_USE_IPXE" == "True" ]; then
+if [ "$IRONIC_USE_IPXE" == "true" ] || [ "$IRONIC_USE_IPXE" == "True" ]; then
     PXE_BOOTFILE_NAME="undionly.kpxe"
     PXE_CONFIG_TEMPLATE="\$pybasedir/drivers/modules/ipxe_config.template"
 else
@@ -58,8 +58,8 @@ fi
 IRONIC_CONFIG_FILE="/etc/ironic/ironic.conf"
 AGENT_TEMPLATE="/etc/ironic/agent_config.template"
 
-if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
-     "$IRONIC_NOTIFICATIONS" == "True" ]; then
+if [ "$IRONIC_NOTIFICATIONS" == "true" ] \
+    || [ "$IRONIC_NOTIFICATIONS" == "True" ]; then
     NOTIFICATION_DRIVER="messagingv2"
     SEND_SENSOR_DATA="true"
 else

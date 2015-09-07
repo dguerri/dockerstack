@@ -40,7 +40,8 @@ NEUTRON_CONFIG_FILE="/etc/neutron/neutron.conf"
 DHCP_AGENT_CONFIG_FILE="/etc/neutron/dhcp_agent.ini"
 PLUGIN_ML2_CONFIG_FILE="/etc/neutron/plugins/ml2/ml2_conf.ini"
 
-if [ "$NEUTRON_ENABLE_IPXE" == "true" -o "$NEUTRON_ENABLE_IPXE" == "True" ];
+if [ "$NEUTRON_ENABLE_IPXE" == "true" ] \
+    || [ "$NEUTRON_ENABLE_IPXE" == "True" ];
 then
     DNSMASQ_CONFIG_FILE="/etc/dnsmasq-ipxe.conf"
 else

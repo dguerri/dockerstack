@@ -43,7 +43,8 @@ DATABASE_CONNECTION=\
 "mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/nova"
 CONFIG_FILE="/etc/nova/nova.conf"
 
-if [ "$NOVA_NOTIFICATIONS" == "true" -o "$NOVA_NOTIFICATIONS" == "True" ]; then
+if [ "$NOVA_NOTIFICATIONS" == "true" ] \
+    || [ "$NOVA_NOTIFICATIONS" == "True" ]; then
      NOTIFICATION_DRIVER="messagingv2"
 else
     # Turn off notifications

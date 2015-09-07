@@ -1,0 +1,10 @@
+---
+language: haskell
+sudo: false
+
+install:
+  - cabal update
+  - cabal install shellcheck
+
+script:
+  - make test

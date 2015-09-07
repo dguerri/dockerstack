@@ -1,3 +1,10 @@
+# Dockerstack
+
+OpenStack services running inside containers. Ironic demo included.
+
+**Status**
+* [![Build Status](https://travis-ci.org/dguerri/dockerstack.svg?branch=master)](https://travis-ci.org/dguerri/dockerstack)
+
 ## A picture is worth a thousand words
 
 ![A picture is worth a thousand words](doc/demo.png)

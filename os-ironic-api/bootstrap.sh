@@ -46,8 +46,8 @@ DATABASE_CONNECTION=\
 "mysql://${IRONIC_DB_USER}:${IRONIC_DB_PASS}@${IRONIC_DB_HOST}/ironic"
 CONFIG_FILE="/etc/ironic/ironic.conf"
 
-if [ "$IRONIC_NOTIFICATIONS" == "true" -o \
-     "$IRONIC_NOTIFICATIONS" == "True" ]; then
+if [ "$IRONIC_NOTIFICATIONS" == "true" ] \
+    || [ "$IRONIC_NOTIFICATIONS" == "True" ]; then
     NOTIFICATION_DRIVER="messagingv2"
     SEND_SENSOR_DATA="true"
 else

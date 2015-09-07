@@ -16,10 +16,7 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
 
 
 # Environment variables default values setup
