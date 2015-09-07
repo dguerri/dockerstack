@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,10 +16,8 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
+
 
 # Environment variables default values setup
 SWIFT_IDENTITY_URI="${SWIFT_IDENTITY_URI:-http://127.0.0.1:35357}"
@@ -46,19 +44,16 @@ SWIFT_CONFIG_FILE="/etc/swift/swift.conf"
 PROXY_CONFIG_FILE="/etc/swift/proxy-server.conf"
 
 # Configure the service with environment variables defined
-sed -i "s#%SWIFT_IDENTITY_URI%#${SWIFT_IDENTITY_URI}#" "$PROXY_CONFIG_FILE"
-sed -i "s#%SWIFT_SERVICE_TENANT_NAME%#${SWIFT_SERVICE_TENANT_NAME}#" \
-    "$PROXY_CONFIG_FILE"
-sed -i "s#%SWIFT_SERVICE_USER%#${SWIFT_SERVICE_USER}#" "$PROXY_CONFIG_FILE"
-sed -i "s#%SWIFT_SERVICE_PASS%#${SWIFT_SERVICE_PASS}#" "$PROXY_CONFIG_FILE"
-sed -i "s#%SWIFT_MEMCACHED_SERVERS%#${SWIFT_MEMCACHED_SERVERS}#" \
-    "$PROXY_CONFIG_FILE"
-sed -i "s#%SWIFT_CACHE%#${SWIFT_CACHE}#" "$PROXY_CONFIG_FILE"
+sed -i -e "s#%SWIFT_IDENTITY_URI%#${SWIFT_IDENTITY_URI}#" \
+    -e "s#%SWIFT_SERVICE_TENANT_NAME%#${SWIFT_SERVICE_TENANT_NAME}#" \
+    -e "s#%SWIFT_SERVICE_USER%#${SWIFT_SERVICE_USER}#" \
+    -e "s#%SWIFT_SERVICE_PASS%#${SWIFT_SERVICE_PASS}#" \
+    -e "s#%SWIFT_MEMCACHED_SERVERS%#${SWIFT_MEMCACHED_SERVERS}#" \
+    -e "s#%SWIFT_CACHE%#${SWIFT_CACHE}#" "$PROXY_CONFIG_FILE"
 
-sed -i "s#%SWIFT_HASH_PATH_PREFIX%#${SWIFT_HASH_PATH_PREFIX}#" \
-    "$SWIFT_CONFIG_FILE"
-sed -i "s#%SWIFT_HASH_PATH_SUFFIX%#${SWIFT_HASH_PATH_SUFFIX}#" \
-    "$SWIFT_CONFIG_FILE"
+sed -i -e "s#%SWIFT_HASH_PATH_PREFIX%#${SWIFT_HASH_PATH_PREFIX}#" \
+    -e "s#%SWIFT_HASH_PATH_SUFFIX%#${SWIFT_HASH_PATH_SUFFIX}#" \
+        "$SWIFT_CONFIG_FILE"
 
 # Create rings, if needed
 setup_ring() {

@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,10 +16,8 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
+
 
 # Environment variables default values setup
 NEUTRON_IDENTITY_URI="${NEUTRON_IDENTITY_URI:-http://127.0.0.1:35357}"
@@ -50,29 +48,22 @@ else
 fi
 
 # Configure the service with environment variables defined
-sed -i "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_SERVICE_TENANT_NAME%#${NEUTRON_SERVICE_TENANT_NAME}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_SERVICE_USER%#${NEUTRON_SERVICE_USER}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_SERVICE_PASS%#${NEUTRON_SERVICE_PASS}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_RABBITMQ_HOST%#${NEUTRON_RABBITMQ_HOST}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_RABBITMQ_USER%#${NEUTRON_RABBITMQ_USER}#" \
-    "$NEUTRON_CONFIG_FILE"
-sed -i "s#%NEUTRON_RABBITMQ_PASS%#${NEUTRON_RABBITMQ_PASS}#" \
-    "$NEUTRON_CONFIG_FILE"
+sed -i -e "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
+    -e "s#%NEUTRON_SERVICE_TENANT_NAME%#${NEUTRON_SERVICE_TENANT_NAME}#" \
+    -e "s#%NEUTRON_SERVICE_USER%#${NEUTRON_SERVICE_USER}#" \
+    -e "s#%NEUTRON_SERVICE_PASS%#${NEUTRON_SERVICE_PASS}#" \
+    -e "s#%NEUTRON_RABBITMQ_HOST%#${NEUTRON_RABBITMQ_HOST}#" \
+    -e "s#%NEUTRON_RABBITMQ_USER%#${NEUTRON_RABBITMQ_USER}#" \
+    -e "s#%NEUTRON_RABBITMQ_PASS%#${NEUTRON_RABBITMQ_PASS}#" \
+        "$NEUTRON_CONFIG_FILE"
 
-sed -i "s#%DNSMASQ_CONFIG_FILE%#${DNSMASQ_CONFIG_FILE}#" \
+sed -i -e "s#%DNSMASQ_CONFIG_FILE%#${DNSMASQ_CONFIG_FILE}#" \
     "$DHCP_AGENT_CONFIG_FILE"
 
-sed -i "s#%NEUTRON_EXTERNAL_NETWORKS%#${NEUTRON_EXTERNAL_NETWORKS}#" \
-    "$PLUGIN_ML2_CONFIG_FILE"
-sed -i "s#%TUNNEL_LOCAL_IP%#${TUNNEL_LOCAL_IP}#" "$PLUGIN_ML2_CONFIG_FILE"
-sed -i "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
-    "$PLUGIN_ML2_CONFIG_FILE"
+sed -i -e "s#%NEUTRON_EXTERNAL_NETWORKS%#${NEUTRON_EXTERNAL_NETWORKS}#" \
+    -e "s#%TUNNEL_LOCAL_IP%#${TUNNEL_LOCAL_IP}#" \
+    -e "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
+        "$PLUGIN_ML2_CONFIG_FILE"
 
 # Start OVS switch
 /etc/init.d/openvswitch-switch start

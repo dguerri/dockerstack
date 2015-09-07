@@ -1,9 +1,6 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
-set -u
-set -x
-set -e
-set -o pipefail
+set -uxeo pipefail
 
 if [ ! -d  /pxe/tftpboot ]; then
     mkdir -p /pxe/tftpboot
@@ -15,9 +12,11 @@ cp /usr/lib/syslinux/pxelinux.0 /pxe/tftpboot
 cp /usr/lib/syslinux/chain.c32 /pxe/tftpboot
 cp /usr/lib/ipxe/undionly.kpxe /pxe/tftpboot
 
-echo 're ^(/pxe/tftpboot/) /pxe/tftpboot/\2' > /pxe/tftpboot/map-file
-echo 're ^/pxe/tftpboot/ /pxe/tftpboot/' >> /pxe/tftpboot/map-file
-echo 're ^(^/) /pxe/tftpboot/\1' >> /pxe/tftpboot/map-file
-echo 're ^([^/]) /pxe/tftpboot/\1' >> /pxe/tftpboot/map-file
+echo <<EOF >/pxe/tftpboot/map-file
+re ^(/pxe/tftpboot/) /pxe/tftpboot/\2
+re ^/pxe/tftpboot/ /pxe/tftpboot/
+re ^(^/) /pxe/tftpboot/\1
+re ^([^/]) /pxe/tftpboot/\1
+EOF
 
 in.tftpd $@

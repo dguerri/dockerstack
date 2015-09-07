@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,10 +16,8 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
+
 
 # Environment variables default values setup
 SWIFT_HASH_PATH_PREFIX="${SWIFT_HASH_PATH_PREFIX:-default}"
@@ -28,10 +26,9 @@ SWIFT_HASH_PATH_SUFFIX="${SWIFT_HASH_PATH_SUFFIX:-default}"
 SWIFT_CONFIG_FILE="/etc/swift/swift.conf"
 
 # Configure the service with environment variables defined
-sed -i "s#%SWIFT_HASH_PATH_PREFIX%#${SWIFT_HASH_PATH_PREFIX}#" \
-    "$SWIFT_CONFIG_FILE"
-sed -i "s#%SWIFT_HASH_PATH_SUFFIX%#${SWIFT_HASH_PATH_SUFFIX}#" \
-    "$SWIFT_CONFIG_FILE"
+sed -i -e "s#%SWIFT_HASH_PATH_PREFIX%#${SWIFT_HASH_PATH_PREFIX}#" \
+    -e "s#%SWIFT_HASH_PATH_SUFFIX%#${SWIFT_HASH_PATH_SUFFIX}#" \
+        "$SWIFT_CONFIG_FILE"
 
 # Create recon dir
 mkdir -p /var/cache/swift

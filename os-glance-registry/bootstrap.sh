@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,10 +16,7 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
 
 
 # Environment variables default values setup
@@ -39,15 +36,14 @@ DATABASE_CONNECTION=\
 CONFIG_FILE="/etc/glance/glance-registry.conf"
 
 # Configure the service with environment variables defined
-sed -i "s#%GLANCE_RABBITMQ_HOST%#${GLANCE_RABBITMQ_HOST}#" "$CONFIG_FILE"
-sed -i "s#%GLANCE_RABBITMQ_USER%#${GLANCE_RABBITMQ_USER}#" "$CONFIG_FILE"
-sed -i "s#%GLANCE_RABBITMQ_PASS%#${GLANCE_RABBITMQ_PASS}#" "$CONFIG_FILE"
-sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
-sed -i "s#%GLANCE_IDENTITY_URI%#${GLANCE_IDENTITY_URI}#" "$CONFIG_FILE"
-sed -i "s#%GLANCE_SERVICE_TENANT_NAME%#${GLANCE_SERVICE_TENANT_NAME}#" \
-    "$CONFIG_FILE"
-sed -i "s#%GLANCE_SERVICE_USER%#${GLANCE_SERVICE_USER}#" "$CONFIG_FILE"
-sed -i "s#%GLANCE_SERVICE_PASS%#${GLANCE_SERVICE_PASS}#" "$CONFIG_FILE"
+sed -i -e "s#%GLANCE_RABBITMQ_HOST%#${GLANCE_RABBITMQ_HOST}#" \
+    -e "s#%GLANCE_RABBITMQ_USER%#${GLANCE_RABBITMQ_USER}#" \
+    -e "s#%GLANCE_RABBITMQ_PASS%#${GLANCE_RABBITMQ_PASS}#" \
+    -e "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" \
+    -e "s#%GLANCE_IDENTITY_URI%#${GLANCE_IDENTITY_URI}#" \
+    -e "s#%GLANCE_SERVICE_TENANT_NAME%#${GLANCE_SERVICE_TENANT_NAME}#" \
+    -e "s#%GLANCE_SERVICE_USER%#${GLANCE_SERVICE_USER}#" \
+    -e "s#%GLANCE_SERVICE_PASS%#${GLANCE_SERVICE_PASS}#" "$CONFIG_FILE"
 
 # Migrate glance database
 sudo -u glance glance-manage -v db_sync

@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 #
 # Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
 #
@@ -16,10 +16,8 @@
 # limitations under the License.
 #
 
-set -x
-set -e
-set -u
-set -o pipefail
+set -xeuo pipefail
+
 
 
 # Environment variables default values setup
@@ -43,12 +41,11 @@ DATABASE_CONNECTION=\
 CONFIG_FILE="/etc/keystone/keystone.conf"
 
 # Configure the service with environment variables defined
-sed -i "s#%KEYSTONE_SERVICE_TOKEN%#${KEYSTONE_SERVICE_TOKEN}#" "$CONFIG_FILE"
-sed -i "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" "$CONFIG_FILE"
-sed -i "s#%KEYSTONE_MEMCACHED_SERVERS%#${KEYSTONE_MEMCACHED_SERVERS}#" \
-    "$CONFIG_FILE"
-sed -i "s#%MEMCACHE_ENABLED%#${MEMCACHE_ENABLED}#" "$CONFIG_FILE"
-sed -i "s#%CACHE_BACKEND%#${CACHE_BACKEND}#" "$CONFIG_FILE"
+sed -i -e "s#%KEYSTONE_SERVICE_TOKEN%#${KEYSTONE_SERVICE_TOKEN}#" \
+    -e "s#%DATABASE_CONNECTION%#${DATABASE_CONNECTION}#" \
+    -e "s#%KEYSTONE_MEMCACHED_SERVERS%#${KEYSTONE_MEMCACHED_SERVERS}#" \
+    -e "s#%MEMCACHE_ENABLED%#${MEMCACHE_ENABLED}#" \
+    -e "s#%CACHE_BACKEND%#${CACHE_BACKEND}#" "$CONFIG_FILE"
 
 # Migrate keystone database
 sudo -u keystone keystone-manage -v db_sync
