@@ -38,10 +38,15 @@ COPY agent_config.template /etc/ironic/agent_config.template
 # workaround for Ironic ssh agent bug when using Parallels (and possibly
 # vmware)
 COPY /patches/ssh.py.diff /root/ssh.py.diff
+# workaroung for Ironic bug https://bugs.launchpad.net/ironic/+bug/1454332
+# this could be removed once the fix is packaged
+COPY /patches/pxe_utils.py.diff /root/pxe_utils.py.diff
+# apply patches
 RUN set -x \
     && apt-get -y install patch \
     && cd / \
-    && patch -p0 < /root/ssh.py.diff
+    && patch -p0 < /root/ssh.py.diff \
+    && patch -p0 < /root/pxe_utils.py.diff
 
 # workaround for hardware with older iPXE versions
 COPY boot.ipxe /usr/lib/python2.7/dist-packages/ironic/drivers/modules/boot.ipxe

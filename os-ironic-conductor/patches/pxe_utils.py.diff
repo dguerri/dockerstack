@@ -1,0 +1,23 @@
+--- /usr/lib/python2.7/dist-packages/ironic/common/pxe_utils.py-orig	2015-09-07 16:07:40.144239999 +0000
++++ /usr/lib/python2.7/dist-packages/ironic/common/pxe_utils.py	2015-09-07 16:10:07.248239999 +0000
+@@ -260,15 +260,16 @@
+             # to neutron "dhcp-match=set:ipxe,175" and use below option
+             dhcp_opts.append({'opt_name': 'tag:!ipxe,bootfile-name',
+                               'opt_value': CONF.pxe.pxe_bootfile_name})
++            dhcp_opts.append({'opt_name': 'tag:ipxe,bootfile-name',
++                              'opt_value': ipxe_script_url})
+         else:
+             # !175 == non-iPXE.
+             # http://ipxe.org/howto/dhcpd#ipxe-specific_options
+             dhcp_opts.append({'opt_name': '!175,bootfile-name',
+                               'opt_value': CONF.pxe.pxe_bootfile_name})
+-        # If the request comes from iPXE, direct it to boot from the
+-        # iPXE script
+-        dhcp_opts.append({'opt_name': 'bootfile-name',
+-                          'opt_value': ipxe_script_url})
++            dhcp_opts.append({'opt_name': 'bootfile-name',
++                              'opt_value': ipxe_script_url})
++
+     else:
+         if deploy_utils.get_boot_mode_for_deploy(task.node) == 'uefi':
+             boot_file = CONF.pxe.uefi_pxe_bootfile_name
