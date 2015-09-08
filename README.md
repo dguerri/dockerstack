@@ -17,7 +17,7 @@ OpenStack services running inside containers. Ironic demo included.
  * [MySQL-python](https://pypi.python.org/pypi/MySQL-python) on the ansible server running the playbook
  * OpenStack python clients for Keystone, Glance, Neutron, Swift, Ironic and Nova on the ansible server running the playbook
 
-        pip install python-{keystone,neutron,ironic,nova,glance,swift}client docker-py==1.2.3 MySQL-python
+        pip install python-{keystone,neutron,ironic,nova,glance,swift,openstack}client docker-py==1.2.3 MySQL-python
 
 
 If you are using an Ubuntu box, above requirements require in turn:
