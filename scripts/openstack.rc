@@ -1,0 +1,5 @@
+export OS_USERNAME=admin
+export OS_PASSWORD=Ve0eequaekeiyaebohlo
+export OS_AUTH_URL="http://docker-server.local:5000/v2.0"
+export OS_TENANT_NAME=admin
+export OS_REGION_NAME=regionOne
