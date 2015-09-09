@@ -1,10 +1,10 @@
----
 language: haskell
 sudo: false
-
 install:
   - cabal update
   - cabal install shellcheck
-
 script:
   - make test
+notifications:
+  slack:
+    secure: huihxf982MWEJUfYoape8e9q2q0O9Qs6FvXev9pgScWb/SInCIC5vTxRRfYU9tv+PFOxrkzyYw8i4WmyQBfhaKhiwbT2307LYUlvZeYm8E890bU8jFXJ+FsnZ02Wje8E0jsoxkCgiRVFYFxiCATtP7iY83QQfMXPSuLDwkWORpCw1laLxq4Rl+Z9IB5YXttZ15f1CzNFGRHYXkgC9mPAKZ8H1DT/ydfA3o/vbOfyhbyHSLxwxEst9+IgFBgffmT1m94wigIao3KLyZiHt/E2e7uqUjFfhWiFsKJ5NrS9NGe4hPVRrwpSHos7Lic99kqpjFwvrBT+3CTJhDMkJ1cXlTXpxKIayoZzLUnP0J4mmrkneE9nQvCESdoLDFdz8UQolcBMzADwBg4/OnzlhjyPdFWFY2N/KwaKzCZPnR97BtIICK6B4DNmVCNOBMJviqdULhvNhmR8Xvrdk3C5IGr7p8uaCcazDL51e7Z3LAnNVmzdlECGZ4G/iwItJX0IYBWEE2E/SQtRugrtnJFkhwIRCcnAqyySB9X4Qma7sqY2aWjKKLKmuQMQnzSl27ra+7uI8D3izh0gRGn2d+0WquJ97VHcKa7adpL6iaAORsplA0m6akIjlYExdUL7y4y88ndIm8TrSsN3NdoG6ssHGy5fg63CcpkJt/nOoCRoFPULpIA=
