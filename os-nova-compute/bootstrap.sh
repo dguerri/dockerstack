@@ -19,7 +19,6 @@
 set -xeuo pipefail
 
 
-
 # Environment variables default values setup
 NOVA_RABBITMQ_HOST="${NOVA_RABBITMQ_HOST:-localhost}"
 NOVA_RABBITMQ_USER="${NOVA_RABBITMQ_USER:-nova}"
@@ -43,10 +42,25 @@ NOVA_IRONIC_AUTH_URI="${NOVA_IRONIC_AUTH_URI:-http://127.0.0.1:5000/v2.0}"
 NOVA_IRONIC_SERVICE_TENANT_NAME="${NOVA_IRONIC_SERVICE_TENANT_NAME:-service}"
 NOVA_NOTIFICATIONS="${NOVA_NOTIFICATIONS:-false}"
 NOVA_NOTIFY_ON_STATE_CHANGE="${NOVA_NOTIFY_ON_STATE_CHANGE:-vm_state}"
+NOVA_VIRT_TYPE="${NOVA_VIRT_TYPE:-kvm}"
+NEUTRON_IDENTITY_URI="${NEUTRON_IDENTITY_URI:-http://127.0.0.1:35357}"
+NEUTRON_SERVICE_TENANT_NAME="${NEUTRON_SERVICE_TENANT_NAME:-service}"
+NEUTRON_SERVICE_USER="${NEUTRON_SERVICE_USER:-neutron}"
+#NEUTRON_SERVICE_PASS
+NEUTRON_RABBITMQ_HOST="${NEUTRON_RABBITMQ_HOST:-localhost}"
+NEUTRON_RABBITMQ_USER="${NEUTRON_RABBITMQ_USER:-guest}"
+NEUTRON_RABBITMQ_PASS="${NEUTRON_RABBITMQ_PASS:-guest}"
+NEUTRON_BRIDGE_MAPPINGS="${NEUTRON_BRIDGE_MAPPINGS:-external:br-ex}"
 
-NOVA_MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
+MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
+#MY_SUBNET="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $4}')"
+#MY_GW=$(ip route show | awk '/default/ {print $3}')
+TUNNEL_LOCAL_IP="$MY_IP"
+
 NOVA_CONFIG_FILE="/etc/nova/nova.conf"
 NOVA_COMPUTE_CONFIG_FILE="/etc/nova/nova-compute.conf"
+NEUTRON_CONFIG_FILE="/etc/neutron/neutron.conf"
+PLUGIN_ML2_CONFIG_FILE="/etc/neutron/plugins/ml2/ml2_conf.ini"
 
 if [ "$NOVA_USE_IRONIC" == "true" ] || [ "$NOVA_USE_IRONIC" == "True" ]; then
     FIREWALL_DRIVER="nova.virt.firewall.NoopFirewallDriver"
@@ -72,7 +86,7 @@ else
 fi
 
 # Configure the service with environment variables defined
-sed -i -e "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" \
+sed -i -e "s#%NOVA_MY_IP%#${MY_IP}#" \
     -e "s#%NOVA_RABBITMQ_HOST%#${NOVA_RABBITMQ_HOST}#" \
     -e "s#%NOVA_RABBITMQ_USER%#${NOVA_RABBITMQ_USER}#" \
     -e "s#%NOVA_RABBITMQ_PASS%#${NOVA_RABBITMQ_PASS}#" \
@@ -101,7 +115,36 @@ sed -i -e "s#%NOVA_MY_IP%#${NOVA_MY_IP}#" \
     -e "s#%RESERVED_HOST_MEMORY_MB%#${RESERVED_HOST_MEMORY_MB}#" \
         "$NOVA_CONFIG_FILE"
 
-sed -i -e "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" "$NOVA_COMPUTE_CONFIG_FILE"
+sed -i -e "s#%COMPUTE_DRIVER%#${COMPUTE_DRIVER}#" \
+    -e "s#%NOVA_VIRT_TYPE%#${NOVA_VIRT_TYPE}#" \
+        "$NOVA_COMPUTE_CONFIG_FILE"
+
+sed -i -e "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
+    -e "s#%NEUTRON_SERVICE_TENANT_NAME%#${NEUTRON_SERVICE_TENANT_NAME}#" \
+    -e "s#%NEUTRON_SERVICE_USER%#${NEUTRON_SERVICE_USER}#" \
+    -e "s#%NEUTRON_SERVICE_PASS%#${NEUTRON_SERVICE_PASS}#" \
+    -e "s#%NEUTRON_RABBITMQ_HOST%#${NEUTRON_RABBITMQ_HOST}#" \
+    -e "s#%NEUTRON_RABBITMQ_USER%#${NEUTRON_RABBITMQ_USER}#" \
+    -e "s#%NEUTRON_RABBITMQ_PASS%#${NEUTRON_RABBITMQ_PASS}#" \
+        "$NEUTRON_CONFIG_FILE"
+
+sed -i -e "s#%TUNNEL_LOCAL_IP%#${TUNNEL_LOCAL_IP}#" \
+    -e "s#%NEUTRON_BRIDGE_MAPPINGS%#${NEUTRON_BRIDGE_MAPPINGS}#" \
+        "$PLUGIN_ML2_CONFIG_FILE"
+
+# Start OVS switch
+/etc/init.d/openvswitch-switch start
+
+# Configure br-ex, not really used
+ovs-vsctl add-br br-ex
+
+# Start OVS agent
+/usr/bin/python /usr/bin/neutron-openvswitch-agent \
+    --config-file=/etc/neutron/plugins/ml2/ml2_conf.ini \
+    --config-file=/etc/neutron/neutron.conf &
+
+# Enable nbd support
+modprobe nbd nbds_max=30
 
 # Start the service
 nova-compute

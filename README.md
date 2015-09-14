@@ -121,12 +121,12 @@ For the sake of this demo, as described [here](https://github.com/rehabstudio/do
 
  Add `nameserver 127.0.0.1` on top of the resolv.conf file running the docker server.
 
-__Run the demo:__
+__Run the Ironic demo:__
 
 1. Run `ansible-playbook`:
 
         ~# cd ansible
-        ~# time ansible-playbook -i inventory/docker_server site.yml
+        ~# time ansible-playbook -i inventory/docker_server ironic.yml
 
         [...]
 
@@ -204,4 +204,8 @@ This also creates a virtual switch and a couple of veth interfaces. Il also "pus
         └─────┤eth0├───────────────────────────────────────┘   └─┘          
               └────┘                                                        
 
-3. run `scripts/setup_openstack.sh` to create the initial demo setup for BM provisioning.
+3. run `scripts/setup_ironic.sh` to create the initial demo setup for BM provisioning.
+
+4. boot a new instance
+
+        nova boot --flavor ParallelsVM --image "Ubuntu Vivid - x86_64" --config-drive yes --key-name keyp1  i-am-a-bm-node

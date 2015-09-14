@@ -53,8 +53,6 @@ else
     SCHEDULER_TRACKS_INSTANCE_CHANGES=True
     RAM_ALLOCATION_RATIO="1.5"
     SCHEDULER_USE_BAREMETAL_FILTERS=False
-
-    /etc/init.d/libvirt-bin start
 fi
 
 if [ "$NOVA_NOTIFICATIONS" == "true" ] \

@@ -1,0 +1,557 @@
+---
+# Copyright (c) 2015 Davide Guerri <davide.guerri@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Start up Nova API docker container
+  hosts: docker-servers
+  become: true
+
+  pre_tasks:
+
+    - name: Copy utility script
+      copy:
+        src: files/get_docker_ip.sh
+        dest: /usr/local/bin/get_docker_ip.sh
+        owner: root
+        group: root
+        mode: 0770
+
+  tasks:
+
+    - name: Start Auto-DNS container
+      docker:
+        image: rehabstudio/autodns
+        name: "{{ AUTODNS_HOSTNAME }}"
+        hostname: "{{ AUTODNS_HOSTNAME }}"
+        restart_policy: always
+        ports: 0.0.0.0:53:53/udp
+        volumes: /var/run/docker.sock:/var/run/docker.sock
+      register: autodns_status
+
+    - name: Add a host entry for docker-server.local
+      shell: "docker exec -i \"{{ AUTODNS_HOSTNAME }}\" bash -c \"echo {{ DOCKER_SERVER_EXTERNAL_IP }} {{ DOCKER_SERVER_HOSTNAME }} >> /etc/hosts\""
+      when: autodns_status|changed
+
+    - name: Start Memcached container
+      docker:
+        image: os-memcached
+        name: "{{ MEMCACHED_HOSTNAME }}"
+        hostname: "{{ MEMCACHED_HOSTNAME }}"
+        restart_policy: always
+        expose: 11211/tcp
+
+    - name: Waiting for Memcached to become available
+      wait_for:
+        host: "{{ MEMCACHED_HOSTNAME }}"
+        port: 11211
+        state: started
+
+    - name: Creating MySQL data container
+      docker:
+        name: "{{ MYSQL_DATA_CONTAINER_NAME }}"
+        image: os-base-image
+        state: present
+        command: /bin/true
+        volumes:
+          - /var/lib/mysql
+
+    - name: Start MySQL container
+      docker:
+        image: os-mysql
+        name: "{{ MYSQL_HOSTNAME }}"
+        hostname: "{{ MYSQL_HOSTNAME }}"
+        restart_policy: always
+        expose: 3306/tcp
+        volumes_from:
+          - "{{ MYSQL_DATA_CONTAINER_NAME }}"
+        env:
+          MYSQL_ROOT_PASSWORD: "{{ MYSQL_ROOT_PASSWORD }}"
+
+    - name: Waiting for MySQL to become available
+      wait_for:
+        host: "{{ MYSQL_HOSTNAME }}"
+        port: 3306
+        state: started
+
+    - name: Create OpenStack services databases
+      mysql_db:
+        name: "{{ item }}"
+        state: present
+        login_host: "{{ MYSQL_HOSTNAME }}"
+        login_user: root
+        login_password: "{{ MYSQL_ROOT_PASSWORD }}"
+        encoding: "utf8"
+        collation: "utf8_general_ci"
+      with_items:
+        - glance
+        - keystone
+        - neutron
+        - nova
+
+    - name: Set OpenStack databases users
+      mysql_user:
+        name: "{{ item.name }}"
+        host: "%"
+        password: "{{ item.password }}"
+        priv: "{{ item.db }}.*:ALL"
+        state: present
+        login_host: "{{ MYSQL_HOSTNAME }}"
+        login_user: root
+        login_password: "{{ MYSQL_ROOT_PASSWORD }}"
+      with_items:
+        - name: "{{ GLANCE_DB_USER }}"
+          password: "{{ GLANCE_DB_PASS }}"
+          db: glance
+        - name: "{{ KEYSTONE_DB_USER }}"
+          password: "{{ KEYSTONE_DB_PASS }}"
+          db: keystone
+        - name: "{{ NEUTRON_DB_USER }}"
+          password: "{{ NEUTRON_DB_PASS }}"
+          db: neutron
+        - name: "{{ NOVA_DB_USER }}"
+          password: "{{ NOVA_DB_PASS }}"
+          db: nova
+
+    - name: Start Keystone container
+      docker:
+        image: os-keystone
+        name: "{{ KEYSTONE_HOSTNAME }}"
+        hostname: "{{ KEYSTONE_HOSTNAME }}"
+        restart_policy: always
+        ports:
+          - 0.0.0.0:5000:5000/tcp
+          - 0.0.0.0:35357:35357/tcp
+        env:
+          KEYSTONE_SERVICE_TOKEN: "{{ KEYSTONE_SERVICE_TOKEN }}"
+          KEYSTONE_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          KEYSTONE_DB_USER: "{{ KEYSTONE_DB_USER }}"
+          KEYSTONE_DB_PASS: "{{ KEYSTONE_DB_PASS }}"
+          KEYSTONE_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
+
+    - name: Waiting for Keystone to become available
+      wait_for:
+        host: "{{ KEYSTONE_HOSTNAME }}"
+        port: "{{ item }}"
+        delay: 2
+        state: started
+      with_items:
+        - 35357
+        - 5000
+
+    - name: Create Keystone admin tenant
+      keystone_user:
+        tenant: admin
+        tenant_description:  "Admin tenant"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+
+    - name: Create Keystone service tenant
+      keystone_user:
+        tenant: "{{ SERVICE_TENANT_NAME }}"
+        tenant_description: "Service tenant"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+      register: service_tenant_status
+
+    - name: Gather Service tenant id
+      set_fact:
+        service_tenant_id: "{{ service_tenant_status.id }}"
+
+    - name: Create Keystone users
+      keystone_user:
+        user: "{{ item.name }}"
+        password: "{{ item.password }}"
+        tenant: "{{ item.tenant }}"
+        email: "{{ item.email|default('nobody@localhost') }}"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+      with_items:
+        - name: admin
+          password: "{{ KEYSTONE_ADMIN_PASSWORD }}"
+          tenant: admin
+        - name: "{{ GLANCE_SERVICE_USER }}"
+          password: "{{ GLANCE_SERVICE_PASS }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+        - name: "{{ NEUTRON_SERVICE_USER }}"
+          password: "{{ NEUTRON_SERVICE_PASS }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+        - name: "{{ NOVA_SERVICE_USER }}"
+          password: "{{ NOVA_SERVICE_PASS }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+
+    - name: Add Keystone roles to defined users in defined tenants
+      keystone_user:
+        role: "{{ item.name }}"
+        user: "{{ item.user }}"
+        tenant: "{{ item.tenant }}"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+      with_items:
+        - name: admin
+          user: admin
+          tenant: admin
+        - name: admin
+          user: "{{ GLANCE_SERVICE_USER }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+        - name: admin
+          user: "{{ NEUTRON_SERVICE_USER }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+        - name: admin
+          user: "{{ NOVA_SERVICE_USER }}"
+          tenant: "{{ SERVICE_TENANT_NAME }}"
+
+    - name: Create Keystone services
+      keystone_service:
+        name: "{{ item.name }}"
+        service_type: "{{ item.service_type }}"
+        description: "{{ item.description|default('Not provided') }}"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+      with_items:
+        - { name: keystone, service_type: identity }
+        - { name: glance, service_type: image }
+        - { name: neutron, service_type: network }
+        - { name: nova, service_type: compute }
+
+    - name: Create Keystone endpoints
+      keystone_endpoint:
+        service_name: "{{ item.service_name }}"
+        region: "regionOne"
+        public_url: "{{ item.public_url }}"
+        internal_url: "{{ item.internal_url }}"
+        admin_url: "{{ item.admin_url }}"
+        endpoint: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        token: "{{ KEYSTONE_SERVICE_TOKEN }}"
+        state: "present"
+      with_items:
+        - service_name: keystone
+          public_url: "http://{{ DOCKER_SERVER_HOSTNAME }}:5000/v2.0"
+          internal_url: "http://{{ KEYSTONE_HOSTNAME }}:5000/v2.0"
+          admin_url: "http://{{ KEYSTONE_HOSTNAME }}:35357/v2.0"
+        - service_name: glance
+          public_url: "http://{{ DOCKER_SERVER_HOSTNAME }}:9292/"
+          internal_url: "http://{{ GLANCE_API_HOSTNAME }}:9292/"
+          admin_url: "http://{{ GLANCE_API_HOSTNAME }}:9292/"
+        - service_name: neutron
+          public_url: "http://{{ DOCKER_SERVER_HOSTNAME }}:9696/"
+          internal_url: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696/"
+          admin_url: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696/"
+        - service_name: nova
+          public_url: "http://{{ DOCKER_SERVER_HOSTNAME }}:8774/v2/%(tenant_id)s"
+          internal_url: "http://{{ NOVA_API_HOSTNAME }}:8774/v2/%(tenant_id)s"
+          admin_url: "http://{{ NOVA_API_HOSTNAME }}:8774/v2/%(tenant_id)s"
+
+    - name: Start RabbitMQ container
+      docker:
+        image: os-rabbitmq
+        name: "{{ RABBITMQ_HOSTNAME }}"
+        hostname: "{{ RABBITMQ_HOSTNAME }}"
+        restart_policy: always
+        expose: 5672
+        env:
+          RABBITMQ_ERLANG_COOKIE: "{{ RABBITMQ_ERLANG_COOKIE }}"
+      register: rabbitmq_status
+
+    - name: Waiting for RabbitMQ to become available
+      wait_for:
+        host: "{{ RABBITMQ_HOSTNAME }}"
+        port: 5672
+        state: started
+
+    - name: Create RabbitMQ users
+      shell: "docker exec -i \"{{ RABBITMQ_HOSTNAME }}\" rabbitmqctl add_user \"{{ item.user }}\" \"{{ item.pass }}\""
+      with_items:
+        - user: "{{ GLANCE_RABBITMQ_USER }}"
+          pass: "{{ GLANCE_RABBITMQ_PASS }}"
+        - user: "{{ NOVA_RABBITMQ_USER }}"
+          pass: "{{ NOVA_RABBITMQ_PASS }}"
+        - user: "{{ NEUTRON_RABBITMQ_USER }}"
+          pass: "{{ NEUTRON_RABBITMQ_PASS }}"
+      when: rabbitmq_status|changed
+
+    - name: Create RabbitMQ users
+      shell: "docker exec -i \"{{ RABBITMQ_HOSTNAME }}\" rabbitmqctl set_permissions \"{{ item }}\" \".*\" \".*\" \".*\""
+      with_items:
+        - "{{ GLANCE_RABBITMQ_USER }}"
+        - "{{ NOVA_RABBITMQ_USER }}"
+        - "{{ NEUTRON_RABBITMQ_USER }}"
+      when: rabbitmq_status|changed
+
+    - name: Start Neutron Server container
+      docker:
+        image: os-neutron-server
+        name: "{{ NEUTRON_SERVER_HOSTNAME }}"
+        hostname: "{{ NEUTRON_SERVER_HOSTNAME }}"
+        restart_policy: always
+        ports:
+          - 0.0.0.0:9696:9696/tcp
+        env:
+          NEUTRON_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          NEUTRON_DB_USER: "{{ NEUTRON_DB_USER }}"
+          NEUTRON_DB_PASS: "{{ NEUTRON_DB_PASS }}"
+          NEUTRON_NOVA_URL: "http://{{ NOVA_API_HOSTNAME }}:8774/v2"
+          NEUTRON_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NOVA_AUTH_URL: "{{ AUTH_URI }}"
+          NOVA_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_SERVICE_USER: "{{ NOVA_SERVICE_USER }}"
+          NOVA_SERVICE_PASS: "{{ NOVA_SERVICE_PASS }}"
+          NEUTRON_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NEUTRON_RABBITMQ_USER: "{{ NEUTRON_RABBITMQ_USER }}"
+          NEUTRON_RABBITMQ_PASS: "{{ NEUTRON_RABBITMQ_PASS }}"
+          NEUTRON_EXTERNAL_NETWORKS: "external"
+          NEUTRON_BRIDGE_MAPPINGS: "external:br-ex"
+
+    - name: Waiting for Neutron Server to become available
+      wait_for:
+        host: "{{ NEUTRON_SERVER_HOSTNAME }}"
+        port: 9696
+        state: started
+
+    - name: Start Neutron DHCP agent container
+      docker:
+        image: os-neutron-dhcp-agent
+        name: "{{ NEUTRON_DHCP_AGENT_HOSTNAME }}"
+        hostname: "{{ NEUTRON_DHCP_AGENT_HOSTNAME }}"
+        restart_policy: always
+        volumes:
+          - /lib/modules:/lib/modules:ro
+        privileged: true
+        env:
+          NEUTRON_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NEUTRON_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NEUTRON_RABBITMQ_USER: "{{ NEUTRON_RABBITMQ_USER }}"
+          NEUTRON_RABBITMQ_PASS: "{{ NEUTRON_RABBITMQ_PASS }}"
+          NEUTRON_EXTERNAL_NETWORKS: "external"
+          NEUTRON_BRIDGE_MAPPINGS: "external:br-ex"
+
+    - name: Start Neutron L3 agent container
+      docker:
+        image: os-neutron-l3-agent
+        name: "{{ NEUTRON_L3_AGENT_HOSTNAME }}"
+        hostname: "{{ NEUTRON_L3_AGENT_HOSTNAME }}"
+        restart_policy: always
+        volumes:
+          - /lib/modules:/lib/modules:ro
+        privileged: true
+        env:
+          NEUTRON_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NEUTRON_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NEUTRON_RABBITMQ_USER: "{{ NEUTRON_RABBITMQ_USER }}"
+          NEUTRON_RABBITMQ_PASS: "{{ NEUTRON_RABBITMQ_PASS }}"
+          NEUTRON_EXTERNAL_NETWORKS: "external"
+          NEUTRON_BRIDGE_MAPPINGS: "external:br-ex"
+
+    - name: Start Nova Conductor container
+      docker:
+        image: os-nova-conductor
+        name: "{{ NOVA_CONDUCTOR_HOSTNAME }}"
+        hostname: "{{ NOVA_CONDUCTOR_HOSTNAME }}"
+        restart_policy: always
+        env:
+          NOVA_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          NOVA_DB_USER: "{{ NOVA_DB_USER }}"
+          NOVA_DB_PASS: "{{ NOVA_DB_PASS }}"
+          NOVA_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NOVA_RABBITMQ_USER: "{{ NOVA_RABBITMQ_USER }}"
+          NOVA_RABBITMQ_PASS: "{{ NOVA_RABBITMQ_PASS }}"
+          NOVA_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NOVA_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_SERVICE_USER: "{{ NOVA_SERVICE_USER }}"
+          NOVA_SERVICE_PASS: "{{ NOVA_SERVICE_PASS }}"
+          NOVA_GLANCE_API_URLS: "http://{{ GLANCE_API_HOSTNAME }}:9292"
+          NOVA_NEUTRON_SERVER_URL: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696"
+          NOVA_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
+          NOVA_NOTIFICATIONS: "{{ ENABLE_NOVA_NOTIFICATIONS }}"
+
+    - name: Start Nova API container
+      docker:
+        image: os-nova-api
+        name: "{{ NOVA_API_HOSTNAME }}"
+        hostname: "{{ NOVA_API_HOSTNAME }}"
+        restart_policy: always
+        privileged: true
+        volumes:
+          - /lib/modules:/lib/modules:ro
+        ports:
+          - 0.0.0.0:8774:8774/tcp
+        env:
+          NOVA_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          NOVA_DB_USER: "{{ NOVA_DB_USER }}"
+          NOVA_DB_PASS: "{{ NOVA_DB_PASS }}"
+          NOVA_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NOVA_RABBITMQ_USER: "{{ NOVA_RABBITMQ_USER }}"
+          NOVA_RABBITMQ_PASS: "{{ NOVA_RABBITMQ_PASS }}"
+          NOVA_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NOVA_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_SERVICE_USER: "{{ NOVA_SERVICE_USER }}"
+          NOVA_SERVICE_PASS: "{{ NOVA_SERVICE_PASS }}"
+          NOVA_GLANCE_API_URLS: "http://{{ GLANCE_API_HOSTNAME }}:9292"
+          NOVA_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
+          NOVA_NEUTRON_SERVER_URL: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696"
+          NOVA_NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NOVA_NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NOVA_NEUTRON_AUTH_URI: "{{ AUTH_URI }}"
+          NOVA_NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_NOTIFICATIONS: "{{ ENABLE_NOVA_NOTIFICATIONS }}"
+
+    - name: Waiting for Nova API to become available
+      wait_for:
+        host: "{{ NOVA_API_HOSTNAME }}"
+        port: 8774
+        state: started
+
+    - name: Start Nova Scheduler container
+      docker:
+        image: os-nova-scheduler
+        name: "{{ NOVA_SCHEDULER_HOSTNAME }}"
+        hostname: "{{ NOVA_SCHEDULER_HOSTNAME }}"
+        restart_policy: always
+        env:
+          NOVA_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          NOVA_DB_USER: "{{ NOVA_DB_USER }}"
+          NOVA_DB_PASS: "{{ NOVA_DB_PASS }}"
+          NOVA_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NOVA_RABBITMQ_USER: "{{ NOVA_RABBITMQ_USER }}"
+          NOVA_RABBITMQ_PASS: "{{ NOVA_RABBITMQ_PASS }}"
+          NOVA_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NOVA_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_SERVICE_USER: "{{ NOVA_SERVICE_USER }}"
+          NOVA_SERVICE_PASS: "{{ NOVA_SERVICE_PASS }}"
+          NOVA_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
+          NOVA_NOTIFICATIONS: "{{ ENABLE_NOVA_NOTIFICATIONS }}"
+
+    - name: Creating compute data container
+      docker:
+        name: "{{ COMPUTE_DATA_CONTAINER_NAME }}"
+        image: os-base-image
+        state: present
+        command: /bin/true
+        volumes:
+          - /var/lib/nova/instances
+
+    - name: Start Nova Compute container
+      docker:
+        image: os-nova-compute
+        name: "{{ NOVA_COMPUTE_HOSTNAME }}"
+        hostname: "{{ NOVA_COMPUTE_HOSTNAME }}"
+        restart_policy: always
+        privileged: true
+        volumes_from:
+          - "{{ COMPUTE_DATA_CONTAINER_NAME }}"
+        volumes:
+          - /lib/modules:/lib/modules:ro
+        env:
+          NOVA_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NOVA_RABBITMQ_USER: "{{ NOVA_RABBITMQ_USER }}"
+          NOVA_RABBITMQ_PASS: "{{ NOVA_RABBITMQ_PASS }}"
+          NOVA_MEMCACHED_SERVERS: "{{ MEMCACHED_SERVERS }}"
+          NOVA_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NOVA_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_SERVICE_USER: "{{ NOVA_SERVICE_USER }}"
+          NOVA_SERVICE_PASS: "{{ NOVA_SERVICE_PASS }}"
+          NOVA_GLANCE_API_URLS: "http://{{ GLANCE_API_HOSTNAME }}:9292"
+          NOVA_NEUTRON_SERVER_URL: "http://{{ NEUTRON_SERVER_HOSTNAME }}:9696"
+          NOVA_NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NOVA_NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NOVA_NEUTRON_AUTH_URI: "{{ AUTH_URI }}"
+          NOVA_NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NOVA_NOTIFICATIONS: "{{ ENABLE_NOVA_NOTIFICATIONS }}"
+          NOVA_VIRT_TYPE: "{{ NOVA_VIRT_TYPE }}"
+          NEUTRON_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NEUTRON_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NEUTRON_RABBITMQ_USER: "{{ NEUTRON_RABBITMQ_USER }}"
+          NEUTRON_RABBITMQ_PASS: "{{ NEUTRON_RABBITMQ_PASS }}"
+          NEUTRON_BRIDGE_MAPPINGS: "external:br-ex"
+
+
+    - name: Start Glance Registry container
+      docker:
+        image: os-glance-registry
+        name: "{{ GLANCE_REGISTRY_HOSTNAME }}"
+        hostname: "{{ GLANCE_REGISTRY_HOSTNAME }}"
+        restart_policy: always
+        expose: 9191/tcp
+        env:
+          GLANCE_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          GLANCE_DB_USER: "{{ GLANCE_DB_USER }}"
+          GLANCE_DB_PASS: "{{ GLANCE_DB_PASS }}"
+          GLANCE_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          GLANCE_RABBITMQ_USER: "{{ GLANCE_RABBITMQ_USER }}"
+          GLANCE_RABBITMQ_PASS: "{{ GLANCE_RABBITMQ_PASS }}"
+          GLANCE_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          GLANCE_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          GLANCE_SERVICE_USER: "{{ GLANCE_SERVICE_USER }}"
+          GLANCE_SERVICE_PASS: "{{ GLANCE_SERVICE_PASS }}"
+
+    - name: Waiting for Glance Registry to become available
+      wait_for:
+        host: "{{ GLANCE_REGISTRY_HOSTNAME }}"
+        port: 9191
+        state: started
+
+    - name: Creating glance data container
+      docker:
+        name: "{{ GLANCE_DATA_CONTAINER_NAME }}"
+        image: os-base-image
+        state: present
+        command: /bin/true
+        volumes:
+          - /var/lib/glance/images/
+
+    - name: Start Glance API container
+      docker:
+        image: os-glance-api
+        name: "{{ GLANCE_API_HOSTNAME }}"
+        hostname: "{{ GLANCE_API_HOSTNAME }}"
+        restart_policy: always
+        volumes_from:
+            - "{{ GLANCE_DATA_CONTAINER_NAME }}"
+        ports:
+          - 0.0.0.0:9292:9292/tcp
+        env:
+          GLANCE_DB_HOST: "{{ MYSQL_HOSTNAME }}"
+          GLANCE_DB_USER: "{{ GLANCE_DB_USER }}"
+          GLANCE_DB_PASS: "{{ GLANCE_DB_PASS }}"
+          GLANCE_REGISTRY_HOST: "{{ GLANCE_REGISTRY_HOSTNAME }}"
+          GLANCE_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          GLANCE_RABBITMQ_USER: "{{ GLANCE_RABBITMQ_USER }}"
+          GLANCE_RABBITMQ_PASS: "{{ GLANCE_RABBITMQ_PASS }}"
+          GLANCE_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          GLANCE_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          GLANCE_SERVICE_USER: "{{ GLANCE_SERVICE_USER }}"
+          GLANCE_SERVICE_PASS: "{{ GLANCE_SERVICE_PASS }}"
+
+    - name: Waiting for Glance API to become available
+      wait_for:
+        host: "{{ GLANCE_API_HOSTNAME }}"
+        port: 9292
+        state: started

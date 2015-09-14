@@ -36,16 +36,8 @@ MY_IP="$(ip addr show eth0 | awk -F' +|/' '/global/ {print $3}')"
 #MY_GW=$(ip route show | awk '/default/ {print $3}')
 TUNNEL_LOCAL_IP="$MY_IP"
 NEUTRON_CONFIG_FILE="/etc/neutron/neutron.conf"
-DHCP_AGENT_CONFIG_FILE="/etc/neutron/dhcp_agent.ini"
+#L3_AGENT_CONFIG_FILE="/etc/neutron/l3_agent.ini"
 PLUGIN_ML2_CONFIG_FILE="/etc/neutron/plugins/ml2/ml2_conf.ini"
-
-if [ "$NEUTRON_ENABLE_IPXE" == "true" ] \
-    || [ "$NEUTRON_ENABLE_IPXE" == "True" ];
-then
-    DNSMASQ_CONFIG_FILE="/etc/dnsmasq-ipxe.conf"
-else
-    DNSMASQ_CONFIG_FILE=""
-fi
 
 # Configure the service with environment variables defined
 sed -i -e "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
@@ -56,9 +48,6 @@ sed -i -e "s#%NEUTRON_IDENTITY_URI%#${NEUTRON_IDENTITY_URI}#" \
     -e "s#%NEUTRON_RABBITMQ_USER%#${NEUTRON_RABBITMQ_USER}#" \
     -e "s#%NEUTRON_RABBITMQ_PASS%#${NEUTRON_RABBITMQ_PASS}#" \
         "$NEUTRON_CONFIG_FILE"
-
-sed -i -e "s#%DNSMASQ_CONFIG_FILE%#${DNSMASQ_CONFIG_FILE}#" \
-    "$DHCP_AGENT_CONFIG_FILE"
 
 sed -i -e "s#%NEUTRON_EXTERNAL_NETWORKS%#${NEUTRON_EXTERNAL_NETWORKS}#" \
     -e "s#%TUNNEL_LOCAL_IP%#${TUNNEL_LOCAL_IP}#" \
@@ -79,6 +68,6 @@ ip link set dev br-ex up
     --config-file=/etc/neutron/neutron.conf &
 
 # Start the service
-neutron-dhcp-agent \
+neutron-l3-agent \
     --config-file=/etc/neutron/neutron.conf \
-    --config-file=/etc/neutron/dhcp_agent.ini
+    --config-file=/etc/neutron/l3_agent.ini

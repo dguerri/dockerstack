@@ -19,38 +19,57 @@
 set -uexo pipefail
 
 IP="10.29.29.1/24"
+HOST_EXTERNAL_INTERFACE="eth1"
 
-container_name="neutron-dhcp-agent.os-in-a-box"
-host_external_interface="eth1"
 
-docker_pid="$(docker inspect --format '{{ .State.Pid }}' $container_name)"
+# Container names (non-existing containers are skipped)
+container_names=(
+    "neutron-dhcp-agent.os-in-a-box"
+    "neutron-l3-agent.os-in-a-box"
+)
 
 # Add provisioning bridge
 ovs-vsctl br-exists provisioning && ovs-vsctl del-br provisioning
 ovs-vsctl add-br provisioning
-ovs-vsctl add-port provisioning "$host_external_interface"
+ovs-vsctl add-port provisioning "$HOST_EXTERNAL_INTERFACE"
 ip link set dev provisioning up
-ip link set dev "$host_external_interface" up
+ip link set dev "$HOST_EXTERNAL_INTERFACE" up
 
-# Create a veth pair
-if [ -d "/sys/class/net/ext0" ]; then
-  ip link del dev ext0
-fi
+for container_name in "${container_names[@]}"; do
+    # Get docker container PID
+    docker_pid=$(docker inspect --format "{{ .State.Pid }}" \
+        "$container_name" || echo "not available")
 
-ip link add name ext0 type veth peer name ext1
-ip link set dev ext0 up
+    if [ "$docker_pid" == "not available" ]; then
+        continue
+    fi
 
-# Attack ext0 to the provisioning bridge
-ovs-vsctl add-port provisioning ext0
+    if_id=$(echo "$container_name"|md5sum|dd bs=1 count=5 2>/dev/null)
 
-# Move ext1 into the neutron container
-ip link set dev ext1 netns "$docker_pid"
+    # Create a veth pair
+    if [ -d "/sys/class/net/if_${if_id}_0" ]; then
+      ip link del dev "if_${if_id}_0"
+    fi
 
-# Attach ext1 to br-ex
-docker exec "$container_name" ovs-vsctl port-to-br ext1 && \
-    docker exec "$container_name" ovs-vsctl del-port br-ex ext1
-docker exec "$container_name" ip link set dev ext1 up
-docker exec "$container_name" ovs-vsctl add-port br-ex ext1
+    ip link add name "if_${if_id}_0" type veth \
+        peer name "if_${if_id}_1"
+    ip link set dev "if_${if_id}_0" up
+
+    # Attach ext0 to the provisioning bridge
+    ovs-vsctl add-port provisioning "if_${if_id}_0"
+
+    # Move "if_${if_id}_1" into the neutron container
+    ip link set dev "if_${if_id}_1" netns "$docker_pid"
+
+    # Attach "if_${if_id}_1" to br-ex
+    docker exec "$container_name" \
+        ovs-vsctl port-to-br "if_${if_id}_1" && \
+            docker exec "$container_name" \
+                ovs-vsctl del-port br-ex "if_${if_id}_1"
+    docker exec "$container_name" ip link set dev "if_${if_id}_1" up
+    docker exec "$container_name" \
+        ovs-vsctl add-port br-ex "if_${if_id}_1"
+done
 
 # Assign the IP
 ip addr add "$IP" dev provisioning

@@ -29,6 +29,7 @@ BASE_CONTAINERS :=	os-mysql \
 					os-nova-scheduler \
 					os-nova-compute \
 					os-neutron-dhcp-agent \
+					os-neutron-l3-agent \
 					os-ironic-conductor \
 					os-ironic-api \
 					os-swift-proxy \

@@ -148,6 +148,7 @@
       wait_for:
         host: "{{ KEYSTONE_HOSTNAME }}"
         port: "{{ item }}"
+        delay: 2
         state: started
       with_items:
         - 35357
@@ -598,6 +599,13 @@
           NOVA_NEUTRON_AUTH_URI: "{{ AUTH_URI }}"
           NOVA_NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
           NOVA_NOTIFICATIONS: "{{ ENABLE_NOVA_NOTIFICATIONS }}"
+          NEUTRON_IDENTITY_URI: "{{ IDENTITY_URI }}"
+          NEUTRON_SERVICE_TENANT_NAME: "{{ SERVICE_TENANT_NAME }}"
+          NEUTRON_SERVICE_USER: "{{ NEUTRON_SERVICE_USER }}"
+          NEUTRON_SERVICE_PASS: "{{ NEUTRON_SERVICE_PASS }}"
+          NEUTRON_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
+          NEUTRON_RABBITMQ_USER: "{{ NEUTRON_RABBITMQ_USER }}"
+          NEUTRON_RABBITMQ_PASS: "{{ NEUTRON_RABBITMQ_PASS }}"
 
     - name: Creating Swift rings data container
       docker:

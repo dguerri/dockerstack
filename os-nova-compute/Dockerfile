@@ -23,17 +23,24 @@ RUN set -x \
     && apt-get -y update \
     && apt-get -y install \
         nova-compute \
-        python-ironicclient \
+        neutron-plugin-ml2 \
+        neutron-plugin-openvswitch-agent \
+        python-neutronclient \
         ironic-common \
+        python-ironicclient \
     && apt-get -y clean \
     && rm -f /var/lib/nova/nova.sqlite
 
 # copy config files
 COPY nova.conf /etc/nova/nova.conf
 COPY nova-compute.conf /etc/nova/nova-compute.conf
+COPY ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+COPY neutron.conf /etc/neutron/neutron.conf
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
+
+VOLUME /var/lib/nova/instances:/var/lib/nova/instances
 
 ENTRYPOINT ["/etc/bootstrap.sh"]

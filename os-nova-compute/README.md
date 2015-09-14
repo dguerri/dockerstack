@@ -26,6 +26,15 @@
  `NOVA_IRONIC_SERVICE_TENANT_NAME` | | | N
  `NOVA_NOTIFICATIONS` | Whether to enable notifications in Nova | `false` | N
  `NOVA_NOTIFY_ON_STATE_CHANGE` | Which notifications are sent. Acceptable values: `vm_state`, `vm_and_task_state`, `None` | `vm_state` | N
+ `NOVA_VIRT_TYPE` | | `kvm` | N
+ `NEUTRON_IDENTITY_URI` | | `http://127.0.0.1:35357` | N
+ `NEUTRON_SERVICE_TENANT_NAME` | | `service` | N
+ `NEUTRON_SERVICE_USER` | | `neutron` | N
+ `NEUTRON_SERVICE_PASS` | | None | Y
+ `NEUTRON_RABBITMQ_HOST` | | `localhost` | N
+ `NEUTRON_RABBITMQ_USER` | | `guest` | N
+ `NEUTRON_RABBITMQ_PASS` | | `guest` | N
+ `NEUTRON_BRIDGE_MAPPINGS` | | `external:br-ex` | N
 
 ## Examples
 
@@ -53,4 +62,11 @@
         --env NOVA_IRONIC_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
         --env NOVA_NOTIFY_ON_STATE_CHANGE="vm_and_task_state" \
         --env NOVA_NOTIFICATIONS="true" \
-        os-nova-compute
+        --env NEUTRON_IDENTITY_URI="$IDENTITY_URI" \
+        --env NEUTRON_SERVICE_TENANT_NAME="$SERVICE_TENANT_NAME" \
+        --env NEUTRON_SERVICE_USER="$NOVA_SERVICE_USER" \
+        --env NEUTRON_SERVICE_PASS="$NOVA_SERVICE_PASS" \
+        --env NEUTRON_RABBITMQ_HOST="$RABBITMQ_HOSTNAME" \
+        --env NEUTRON_RABBITMQ_USER="$NOVA_RABBITMQ_USER" \
+        --env NEUTRON_RABBITMQ_PASS="$NOVA_RABBITMQ_PASS" \
+         os-nova-compute

@@ -15,27 +15,23 @@
 # limitations under the License.
 #
 
-FROM os-base-image
-MAINTAINER Davide Guerri <davide.guerri@gmail.com>
+current_dir := $(shell basename $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+BUILD_VERSION ?= latest
 
-# install packages
-RUN set -x \
-    && apt-get -y update \
-    && apt-get -y install \
-        glance \
-        python-mysqldb \
-    && apt-get -y clean \
-    && rm -f /var/lib/glance/glance.sqlite
+all: build
 
-# copy config file
-COPY glance-api.conf /etc/glance/glance-api.conf
+build:
+	@docker build --rm --tag=$(current_dir):$(BUILD_VERSION) . > /dev/null
+	@echo "🔨  $(current_dir):$(BUILD_VERSION) - Done"
 
-# add bootstrap script and make it executable
-COPY bootstrap.sh /etc/bootstrap.sh
-RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
+clean:
+	@docker rmi -f $(current_dir):$(BUILD_VERSION) || true
+	@echo "🔫  $(current_dir):$(BUILD_VERSION) - Done"
 
-VOLUME /var/lib/glance/images/:/var/lib/glance/images/
+rebuild: clean build
 
-EXPOSE 9292
+test:
+	@shellcheck bootstrap.sh
+	@echo "✅  $(current_dir):$(BUILD_VERSION) - Passed"
 
-ENTRYPOINT ["/etc/bootstrap.sh"]
+.PHONY: all build clean test rebuild

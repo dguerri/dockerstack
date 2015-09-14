@@ -22,20 +22,19 @@ MAINTAINER Davide Guerri <davide.guerri@gmail.com>
 RUN set -x \
     && apt-get -y update \
     && apt-get -y install \
-        glance \
-        python-mysqldb \
+        neutron-plugin-ml2 \
+        neutron-plugin-openvswitch-agent \
+        neutron-l3-agent \
     && apt-get -y clean \
-    && rm -f /var/lib/glance/glance.sqlite
+    && rm -f /var/lib/neutron/neutron.sqlite
 
-# copy config file
-COPY glance-api.conf /etc/glance/glance-api.conf
+# copy config files
+COPY l3_agent.ini /etc/neutron/l3_agent.ini
+COPY ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini
+COPY neutron.conf /etc/neutron/neutron.conf
 
 # add bootstrap script and make it executable
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
-
-VOLUME /var/lib/glance/images/:/var/lib/glance/images/
-
-EXPOSE 9292
 
 ENTRYPOINT ["/etc/bootstrap.sh"]

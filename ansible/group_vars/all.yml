@@ -32,6 +32,7 @@ GLANCE_REGISTRY_HOSTNAME: glance-registry.os-in-a-box
 GLANCE_API_HOSTNAME: glance-api.os-in-a-box
 NEUTRON_SERVER_HOSTNAME: neutron-server.os-in-a-box
 NEUTRON_DHCP_AGENT_HOSTNAME: neutron-dhcp-agent.os-in-a-box
+NEUTRON_L3_AGENT_HOSTNAME: neutron-l3-agent.os-in-a-box
 NOVA_CONDUCTOR_HOSTNAME: nova-conductor.os-in-a-box
 NOVA_API_HOSTNAME: nova-api.os-in-a-box
 NOVA_SCHEDULER_HOSTNAME: nova-scheduler.os-in-a-box
@@ -76,6 +77,8 @@ MYSQL_DATA_CONTAINER_NAME: mysql-data
 SWIFT_DEVS_DATA_CONTAINER_NAME: swift-devs-data
 SWIFT_RINGS_DATA_CONTAINER_NAME: swift-rings-data
 PXE_BOOT_DATA_CONTAINER_NAME: pxe-boot-data
+COMPUTE_DATA_CONTAINER_NAME: compute-data
+GLANCE_DATA_CONTAINER_NAME: glance-data
 
 SERVICE_TENANT_NAME: service
 KEYSTONE_SERVICE_TOKEN: asohzee4cei2ahd6aig6caew6uapheewaezoGei7
@@ -91,3 +94,5 @@ SWIFT_SERVICE_PASS: aeya8la0eey5peih1Sa9
 IRONIC_SERVICE_USER: ironic
 IRONIC_SERVICE_PASS: euch1meeCooNgeaYiSah
 IRONIC_SWIFT_TEMP_URL_KEY: ahtui7veer7OoChaesoh0aich9coh3Iu5kaishoh
+
+NOVA_VIRT_TYPE: qemu
