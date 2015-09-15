@@ -26,6 +26,7 @@ HOST_EXTERNAL_INTERFACE="eth1"
 container_names=(
     "neutron-dhcp-agent.os-in-a-box"
     "neutron-l3-agent.os-in-a-box"
+    "nova-compute.os-in-a-box"
 )
 
 # Add provisioning bridge

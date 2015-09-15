@@ -78,3 +78,8 @@ openstack image create \
 
 # -- [ Nova Key Pair
 nova keypair-add --pub-key ~/.ssh/id_rsa.pub keyp1
+
+# -- [ Nova default secgroup rules
+nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default udp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
