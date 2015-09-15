@@ -203,6 +203,8 @@ Among other things, this script creates a virtual switch and a couple of veth in
 
 3. run `scripts/setup_ironic.sh` to create the initial demo setup for BM provisioning.
 
+ Wait a few seconds for the nova hypervisor (for the corresponding BM node) to show up in `nova hypervisor-list` and for Ironic to detect the power state of the BM node (`ironic node-list`).
+
 4. boot a new instance
 
         nova boot --flavor ParallelsVM --image "Ubuntu Vivid - x86_64" --config-drive yes --key-name keyp1  i-am-a-bm-node
