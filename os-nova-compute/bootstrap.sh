@@ -73,6 +73,21 @@ else
     COMPUTE_MANAGER="nova.compute.manager.ComputeManager"
     RESERVED_HOST_MEMORY_MB=512
 
+    # Enable nbd support
+    modprobe nbd nbds_max=30
+    for ((i=0;i<30;i++)); do
+        if [ ! -b /dev/nbd$i ]; then
+            mknod /dev/nbd$i b 43 $((16*i))
+        fi
+    done
+
+    # Enable KVM support
+    if [ "$NOVA_VIRT_TYPE" == "kvm" ]; then
+        modprobe kvm
+        chown root:kvm /dev/kvm
+        chmod 660 /dev/kvm
+    fi
+
     /etc/init.d/libvirt-bin start
 fi
 
@@ -136,15 +151,13 @@ sed -i -e "s#%TUNNEL_LOCAL_IP%#${TUNNEL_LOCAL_IP}#" \
 /etc/init.d/openvswitch-switch start
 
 # Configure br-ex, not really used
+ovs-vsctl br-exists br-ex && ovs-vsctl del-br br-ex
 ovs-vsctl add-br br-ex
 
 # Start OVS agent
 /usr/bin/python /usr/bin/neutron-openvswitch-agent \
     --config-file=/etc/neutron/plugins/ml2/ml2_conf.ini \
     --config-file=/etc/neutron/neutron.conf &
-
-# Enable nbd support
-modprobe nbd nbds_max=30
 
 # Start the service
 nova-compute

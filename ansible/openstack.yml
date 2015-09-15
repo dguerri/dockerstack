@@ -466,6 +466,7 @@
           - "{{ COMPUTE_DATA_CONTAINER_NAME }}"
         volumes:
           - /lib/modules:/lib/modules:ro
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
         env:
           NOVA_RABBITMQ_HOST: "{{ RABBITMQ_HOSTNAME }}"
           NOVA_RABBITMQ_USER: "{{ NOVA_RABBITMQ_USER }}"

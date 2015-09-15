@@ -95,4 +95,4 @@ IRONIC_SERVICE_USER: ironic
 IRONIC_SERVICE_PASS: euch1meeCooNgeaYiSah
 IRONIC_SWIFT_TEMP_URL_KEY: ahtui7veer7OoChaesoh0aich9coh3Iu5kaishoh
 
-NOVA_VIRT_TYPE: qemu
+NOVA_VIRT_TYPE: kvm

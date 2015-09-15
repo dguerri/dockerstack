@@ -41,6 +41,8 @@ COPY neutron.conf /etc/neutron/neutron.conf
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
-VOLUME /var/lib/nova/instances:/var/lib/nova/instances
+VOLUME /var/lib/nova/instances:/var/lib/nova/instances:rw
+VOLUME /sys/fs/cgroup:/sys/fs/cgroup:rw
+VOLUME /lib/modules:/lib/modules:ro
 
 ENTRYPOINT ["/etc/bootstrap.sh"]

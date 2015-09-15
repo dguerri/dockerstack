@@ -36,4 +36,6 @@ RUN chown root.root /etc/bootstrap.sh && chmod a+x /etc/bootstrap.sh
 
 EXPOSE 8774
 
+VOLUME /lib/modules:/lib/modules:ro
+
 ENTRYPOINT ["/etc/bootstrap.sh"]
