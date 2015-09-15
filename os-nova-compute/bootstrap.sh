@@ -86,7 +86,7 @@ else
         modprobe kvm
         modprobe kvm-amd || modprobe kvm-intel
         if [ ! -c /dev/kvm ]; then
-            mknod /dev/kvm c 10 $(grep '\<kvm\>' /proc/misc | cut -f 1 -d' ')
+            mknod /dev/kvm c 10 "$(grep '\<kvm\>' /proc/misc | cut -f 1 -d' ')"
         fi
         chown root:kvm /dev/kvm
         chmod 660 /dev/kvm
