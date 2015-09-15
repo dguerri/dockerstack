@@ -83,9 +83,9 @@ else
 
     # Enable KVM support
     if [ "$NOVA_VIRT_TYPE" == "kvm" ]; then
-        modprobe kvm
+        modprobe kvm kvm_intel
         if [ ! -c /dev/kvm ]; then
-            mknod /dev/kvm c 10 232
+            mknod /dev/kvm c 10 $(grep '\<kvm\>' /proc/misc | cut -f 1 -d' ')
         fi
         chown root:kvm /dev/kvm
         chmod 660 /dev/kvm
