@@ -99,16 +99,16 @@ Testing requires [shellcheck](http://www.shellcheck.net/about.html) 1.3.8 or lat
 
 ## Run the demos
 
-### Please note
+### Note
 Please keep in mind that the "interesting" things here are the Dockerfiles, not the demos. The two demos show just two possible ways to use container images that are built with the previous command and they are very dependent on the hardware I used to develop them.
 
-Also, in a production environment you may want to distribute your containers on multiple servers and use an external DNS server keeping track of the needed aliases ("service names" -> docker server). You may want to use a DNS service with an API service orchestrated with Ansible, for instance.
+Moreover, in a production environment you may want to distribute your containers on multiple servers and use an external DNS server keeping track of the needed aliases ("service names" -> docker server). You may want to use a DNS service with an API service orchestrated with Ansible, for instance.
 
-The included Ansible playbook also creates a number of data containers to demonstrate how data can be persisted across upgrades while preserving portability.
+The included Ansible playbooks also create a number of data containers to demonstrate how data can be persisted across upgrades while preserving portability.
 
 Both demos use [autodns](https://github.com/rehabstudio/docker-autodns) from rehabstudio. This is not a strict requirement for the proposed infrastructure so you can use your preferred DNS, as long as it can be configured dynamically during the creation of containers.
 Using Ansible to configure an external DNS or even using Avahi daemon are possible alternatives.
-For the sake of these demos, as described [here](https://github.com/rehabstudio/docker-autodns#prerequisites), the docker daemon should be started with the following parameters:
+For the sake of these demos, as described [here](https://github.com/rehabstudio/docker-autodns#prerequisites), the docker daemon should be started with the following parameters (edit `/etc/default/docker`):
 
         DOCKER_OPTS="--bip=172.17.42.1/16 --dns=172.17.42.1 --dns=<your resolver1> [--dns=<your resolver2> [...]]"
 
@@ -207,7 +207,9 @@ Among other things, this script creates a virtual switch and a couple of veth in
 
 4. boot a new instance
 
-        nova boot --flavor ParallelsVM --image "Ubuntu Vivid - x86_64" --config-drive yes --key-name keyp1  i-am-a-bm-node
+        nova boot --flavor ParallelsVM \
+            --image "trusty-server-cloudimg-amd64-disk1" --config-drive yes \
+            --key-name keyp1  i-am-a-bm-node
 
 5. enjoy! :)
 
@@ -293,6 +295,8 @@ Among other things, this script creates a virtual switch and a couple of veth in
 
 4. boot a new instance
 
-        nova boot --flavor m1.small --image "Cirros 0.3.4 - x86_64" --config-drive yes i-am-a-vm
+        nova boot --flavor m1.small \
+            --image "trusty-server-cloudimg-amd64-disk1" \
+            --config-drive yes i-am-a-vm
 
 5. enjoy! :)
