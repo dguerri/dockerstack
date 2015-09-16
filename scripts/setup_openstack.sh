@@ -18,7 +18,7 @@
 
 set -uexo pipefail
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DOWNLOAD_DIR="$HOME/downloads"
 
 CIDR="10.29.29.0/24"
 GATEWAY="10.29.29.1"
@@ -26,14 +26,29 @@ START_IP="10.29.29.20"
 END_IP="10.29.29.200"
 DNS="10.29.29.1"
 
+IMAGES=(
+    "http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img"
+    "https://cloud-images.ubuntu.com/vivid/current/vivid-server-cloudimg-amd64-disk1.img"
+    "https://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img"
+    "https://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-22-20150521.x86_64.qcow2"
+)
+
+# -------------------------------------
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 download_if_not_exists() {
     local url="$1"
-    local filename=$(basename $1)
+    local filename="$(basename $1)"
 
-    if [ ! -f "$SCRIPT_DIR/$filename" ]; then
-        curl -s -o "$SCRIPT_DIR/$filename" "$url"
+    if [ ! -d "$DOWNLOAD_DIR" ]; then
+        mkdir "$DOWNLOAD_DIR"
+    fi
+
+    if [ ! -f "$DOWNLOAD_DIR/$filename" ]; then
+        curl -L -s -o "$DOWNLOAD_DIR/$filename" "$url"
     fi
 }
+
 
 # -- [ Neutron
 neutron net-create \
@@ -53,28 +68,20 @@ neutron subnet-create \
     "$CIDR"
 
 # -- [ Glance
-download_if_not_exists \
-    http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-download_if_not_exists \
-    https://cloud-images.ubuntu.com/vivid/current/vivid-server-cloudimg-amd64-disk1.img
-download_if_not_exists \
-    http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe.vmlinuz
-download_if_not_exists \
-    http://tarballs.openstack.org/ironic-python-agent/coreos/files/coreos_production_pxe_image-oem.cpio.gz
 
-openstack image create \
-    --public \
-    --container-format bare \
-    --disk-format qcow2 \
-    --file "$SCRIPT_DIR/cirros-0.3.4-x86_64-disk.img" \
-    "Cirros 0.3.4 - x86_64"
+for image in "${IMAGES[@]}"; do
+    download_if_not_exists "$image"
 
-openstack image create \
-    --public \
-    --container-format bare \
-    --disk-format qcow2 \
-    --file "$SCRIPT_DIR/vivid-server-cloudimg-amd64-disk1.img" \
-    "Ubuntu Vivid - x86_64"
+    image_basename="$(basename $image)"
+    image_name="${image_basename%.*}"
+
+    openstack image create \
+        --public \
+        --container-format bare \
+        --disk-format qcow2 \
+        --file "$DOWNLOAD_DIR/$image_basename" \
+        "$image_name"
+done
 
 # -- [ Nova Key Pair
 nova keypair-add --pub-key ~/.ssh/id_rsa.pub keyp1

@@ -19,9 +19,11 @@
 openstack network delete external
 openstack keypair list -f value | awk '{print $1}' \
     | xargs -L1 openstack keypair delete
-openstack flavor list -f value | awk '{print $1}' \
+openstack flavor list -f value | awk '/ParallelsVM/ {print $1}' \
     | xargs -L1 openstack flavor delete
 openstack image list -f value | awk '{print $1}' \
     | xargs -L1 openstack image delete
 ironic node-list | awk '/\| [0-9a-f]/ { print $2}' \
     | xargs -L1 ironic node-delete
+openstack security group list -f value | awk '{print $1}' \
+    | xargs -L1 openstack security group delete
